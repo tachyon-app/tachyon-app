@@ -1,0 +1,16 @@
+.DS_Store
+.build/
+*.xcodeproj
+!*.xcodeproj/project.pbxproj
+!*.xcworkspace/contents.xcworkspacedata
+*.xcuserstate
+*.xcuserdatad
+DerivedData/
+.swiftpm/
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+timeline.xctimeline
+playground.xcworkspace
+.build-artifacts/
