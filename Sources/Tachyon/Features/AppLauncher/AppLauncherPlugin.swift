@@ -62,7 +62,8 @@ public final class AppLauncherPlugin: Plugin {
         QueryResult(
             title: appInfo.name,
             subtitle: appInfo.path,
-            icon: nil, // TODO: Extract app icon
+            icon: nil,
+            iconPath: appInfo.path,
             action: {
                 NSWorkspace.shared.open(appInfo.url)
             }

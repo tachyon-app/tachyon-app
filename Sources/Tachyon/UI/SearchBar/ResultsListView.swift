@@ -48,7 +48,12 @@ struct ResultRowView: View {
     var body: some View {
         HStack(spacing: 16) {
             // Icon
-            if let icon = result.icon {
+            if let iconPath = result.iconPath {
+                 Image(nsImage: NSWorkspace.shared.icon(forFile: iconPath))
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 32, height: 32)
+            } else if let icon = result.icon {
                 Text(icon)
                     .font(.system(size: 28))
             } else {
