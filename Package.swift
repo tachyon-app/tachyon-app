@@ -12,7 +12,9 @@ let package = Package(
             targets: ["Tachyon"]
         )
     ],
-    dependencies: [],
+    dependencies: [
+        .package(url: "https://github.com/groue/GRDB.swift.git", from: "6.0.0")
+    ],
     targets: [
         // Main executable app
         .executableTarget(
@@ -27,7 +29,9 @@ let package = Package(
         // Core library with all business logic
         .target(
             name: "TachyonCore",
-            dependencies: [],
+            dependencies: [
+                .product(name: "GRDB", package: "GRDB.swift")
+            ],
             path: "Sources/Tachyon",
             exclude: ["App"]
         ),

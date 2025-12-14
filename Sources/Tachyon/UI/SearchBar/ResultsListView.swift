@@ -48,18 +48,40 @@ struct ResultRowView: View {
     var body: some View {
         HStack(spacing: 16) {
             // Icon
-            if let iconPath = result.iconPath {
-                 Image(nsImage: NSWorkspace.shared.icon(forFile: iconPath))
+            // Icon
+            if let iconData = result.iconData, let image = NSImage(data: iconData) {
+                 Image(nsImage: image)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(width: 32, height: 32)
+            } else if let iconPath = result.iconPath {
+                 if iconPath.hasSuffix(".app") {
+                     Image(nsImage: NSWorkspace.shared.icon(forFile: iconPath))
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 32, height: 32)
+                 } else if let image = NSImage(contentsOfFile: iconPath) {
+                     Image(nsImage: image)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 32, height: 32)
+                 } else {
+                     // Fallback for broken paths
+                     Image(systemName: "doc.fill")
+                        .font(.system(size: 22))
+                        .foregroundColor(.secondary)
+                        .frame(width: 32, height: 32)
+                 }
             } else if let icon = result.icon {
-                Text(icon)
-                    .font(.system(size: 28))
+                // Fixed: Use Image(systemName:) instead of Text(icon)
+                Image(systemName: icon)
+                    .font(.system(size: 22))
+                    .frame(width: 32, height: 32)
             } else {
                 Image(systemName: "app.fill")
                     .font(.system(size: 22))
                     .foregroundColor(isSelected ? .white : .secondary)
+                    .frame(width: 32, height: 32)
             }
             
             // Title and subtitle

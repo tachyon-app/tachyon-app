@@ -48,11 +48,18 @@ public final class QueryEngine {
             return scored
         }
         
-        // Filter out results with score 0
-        scoredResults = scoredResults.filter { $0.score > 0 }
+        // Filter out results with score 0, unless alwaysShow is true
+        scoredResults = scoredResults.filter { $0.score > 0 || $0.alwaysShow }
         
         // Sort by score (descending)
-        scoredResults.sort { $0.score > $1.score }
+        scoredResults.sort { 
+            // If scores are significantly different, use score
+            if abs($0.score - $1.score) > 0.001 {
+                return $0.score > $1.score
+            }
+            // Fallback to title
+            return $0.title < $1.title
+        }
         
         return scoredResults
     }

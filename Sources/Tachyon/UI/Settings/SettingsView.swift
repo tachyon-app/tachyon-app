@@ -46,7 +46,7 @@ public struct SettingsView: View {
                 case .focusMode:
                     PlaceholderSettingsView(title: "Focus Mode Settings")
                 case .searchEngines:
-                    PlaceholderSettingsView(title: "Search Engines Settings")
+                    SearchEnginesSettingsView()
                 case .hotkeys:
                     PlaceholderSettingsView(title: "Hotkeys Settings")
                 }

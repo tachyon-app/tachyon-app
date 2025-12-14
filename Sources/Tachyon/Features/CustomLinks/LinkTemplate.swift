@@ -4,12 +4,14 @@ import Foundation
 public struct LinkTemplate: Codable, Identifiable {
     public var id: UUID = UUID()
     public let name: String
+    public let keyword: String? // Short trigger e.g. "gh", "g"
     public let urlTemplate: String
     public let icon: String?
     
-    public init(id: UUID = UUID(), name: String, urlTemplate: String, icon: String? = nil) {
+    public init(id: UUID = UUID(), name: String, keyword: String? = nil, urlTemplate: String, icon: String? = nil) {
         self.id = id
         self.name = name
+        self.keyword = keyword
         self.urlTemplate = urlTemplate
         self.icon = icon
     }

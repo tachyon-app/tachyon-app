@@ -73,6 +73,12 @@ public class SearchBarWindow: NSPanel {
                 print("🛑 Escape detected in monitor")
                 self?.hide()
                 return nil // Consume the event
+            } else if event.keyCode == 125 { // Arrow Down
+                self?.viewModel.selectNext()
+                return nil
+            } else if event.keyCode == 126 { // Arrow Up
+                self?.viewModel.selectPrevious()
+                return nil
             }
             return event
         }

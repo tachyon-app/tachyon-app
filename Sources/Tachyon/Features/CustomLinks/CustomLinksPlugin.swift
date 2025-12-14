@@ -18,39 +18,58 @@ public class CustomLinksPlugin: Plugin {
     }
     
     public func search(query: String) -> [QueryResult] {
-        // Filter templates that match the query
-        let filteredTemplates = templates.filter { template in
-            if query.isEmpty { return true }
-            return template.name.localizedCaseInsensitiveContains(query) || 
-                   template.urlTemplate.localizedCaseInsensitiveContains(query)
+        var results: [QueryResult] = []
+        
+        for template in templates {
+            if let keyword = template.keyword {
+                // Check if query starts with keyword
+                // Case 1: Exact match "gh" -> show generic
+                if query.caseInsensitiveCompare(keyword) == .orderedSame {
+                     results.append(createResult(template: template, queryRemainder: ""))
+                }
+                // Case 2: "gh something" -> show specific
+                else if query.lowercased().hasPrefix(keyword.lowercased() + " ") {
+                    let remainder = String(query.dropFirst(keyword.count + 1))
+                    results.append(createResult(template: template, queryRemainder: remainder))
+                }
+            } else {
+                // Legacy match by name
+                if query.isEmpty || 
+                   template.name.localizedCaseInsensitiveContains(query) || 
+                   template.urlTemplate.localizedCaseInsensitiveContains(query) {
+                    results.append(createResult(template: template, queryRemainder: ""))
+                }
+            }
         }
         
-        return filteredTemplates.map { template in
-            QueryResult(
-                title: template.name,
-                subtitle: template.urlTemplate,
-                icon: template.icon ?? "link",
-                action: {
-                    // TODO: Show input form for placeholders
-                    // For MVP, if there are no placeholders, just open it
-                    if template.placeholders.isEmpty {
-                        if let url = URL(string: template.urlTemplate) {
-                            NSWorkspace.shared.open(url)
-                        }
-                    } else {
-                        print("Opening template with placeholders not yet implemented: \(template.name)")
-                    }
-                }
-            )
-        }
+        return results
     }
     
+    private func createResult(template: LinkTemplate, queryRemainder: String) -> QueryResult {
+        // Simple map for now: {{query}} -> queryRemainder
+        let values = ["query": queryRemainder]
+        let finalURL = template.constructURL(values: values)
+        
+        let subtitle = queryRemainder.isEmpty ? template.urlTemplate : (finalURL?.absoluteString ?? template.urlTemplate)
+        
+        return QueryResult(
+            title: template.name + (queryRemainder.isEmpty ? "" : ": \(queryRemainder)"),
+            subtitle: subtitle,
+            icon: template.icon ?? "link",
+            action: {
+                if let url = finalURL {
+                    NSWorkspace.shared.open(url)
+                }
+            }
+        )
+    }
+
     private func loadTemplates() {
         // TODO: Load from persistence
         // Add some defaults for testing
         templates = [
-            LinkTemplate(name: "GitHub Pull Requests", urlTemplate: "https://github.com/pulls", icon: "arrow.triangle.pull"),
-            LinkTemplate(name: "Google Search", urlTemplate: "https://google.com/search?q={{query}}", icon: "magnifyingglass")
+            LinkTemplate(name: "GitHub Pull Requests", keyword: "gh", urlTemplate: "https://github.com/pulls", icon: "arrow.triangle.pull"),
+            LinkTemplate(name: "Google Search", keyword: "g", urlTemplate: "https://google.com/search?q={{query}}", icon: "magnifyingglass")
         ]
     }
     

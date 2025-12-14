@@ -50,4 +50,37 @@ final class CustomLinksTests: XCTestCase {
         let url = template.constructURL(values: ["query": "hello world"])
         XCTAssertEqual(url?.absoluteString, "https://google.com/search?q=hello%20world")
     }
+    
+    func testKeywordParsing() {
+        // Use a unique keyword to avoid collision with defaults
+        plugin.addTemplate(LinkTemplate(
+            name: "GitHub Custom",
+            keyword: "gh-custom",
+            urlTemplate: "https://github.com/{{query}}"
+        ))
+        
+        // Test Trigger + Argument (Custom)
+        let resultsArg = plugin.search(query: "gh-custom swift")
+        XCTAssertEqual(resultsArg.count, 1)
+        XCTAssertEqual(resultsArg.first?.subtitle, "https://github.com/swift")
+        
+        // Test Trigger + Argument (Default Google)
+        let resultsGoogleArg = plugin.search(query: "g swift")
+        XCTAssertFalse(resultsGoogleArg.isEmpty)
+        // Check finding the right result (Google might be first or second depending on if "g" matches others)
+        // In defaults: "GitHub Pull Requests" (gh) vs "Google Search" (g). "g" matches "Google Search".
+        let googleResult = resultsGoogleArg.first { $0.title.contains("Google Search") }
+        XCTAssertNotNil(googleResult)
+        XCTAssertEqual(googleResult?.subtitle, "https://google.com/search?q=swift")
+
+        // Test Trigger only (Default Google)
+        let resultsGoogle = plugin.search(query: "g")
+        let googleGeneric = resultsGoogle.first { $0.title == "Google Search" }
+        XCTAssertNotNil(googleGeneric)
+        XCTAssertEqual(googleGeneric?.subtitle, "https://google.com/search?q={{query}}")
+
+        // Test Non-matching Trigger
+        let resultsNone = plugin.search(query: "z")
+        XCTAssertTrue(resultsNone.isEmpty)
+    }
 }

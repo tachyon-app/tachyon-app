@@ -137,6 +137,10 @@ class SearchBarViewModel: ObservableObject {
         queryEngine.register(plugin: customLinks)
         print("✅ CustomLinksPlugin registered")
         
+        let searchEngines = SearchEnginePlugin()
+        queryEngine.register(plugin: searchEngines)
+        print("✅ SearchEnginePlugin registered")
+        
         // Setup debounced search
         queryEngine.onSearchComplete = { [weak self] results in
             self?.results = results
@@ -171,6 +175,16 @@ class SearchBarViewModel: ObservableObject {
                 }
             }
         }
+    }
+    
+    func selectNext() {
+        guard !results.isEmpty else { return }
+        selectedIndex = min(selectedIndex + 1, results.count - 1)
+    }
+    
+    func selectPrevious() {
+        guard !results.isEmpty else { return }
+        selectedIndex = max(selectedIndex - 1, 0)
     }
     
     func executeSelectedResult() {
