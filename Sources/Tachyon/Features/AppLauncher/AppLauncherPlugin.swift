@@ -31,24 +31,36 @@ public final class AppLauncherPlugin: Plugin {
     
     private func indexApps() {
         var apps: [AppInfo] = []
+        var seenURLs = Set<URL>()
         
         // Search common application directories
         let searchPaths = [
             "/Applications",
             "/System/Applications",
+            "/System/Applications/Utilities",
+            "/System/Library/CoreServices/Applications",
             FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Applications").path
         ]
         
         for searchPath in searchPaths {
             if let appURLs = try? FileManager.default.contentsOfDirectory(
                 at: URL(fileURLWithPath: searchPath),
-                includingPropertiesForKeys: [.isApplicationKey],
-                options: [.skipsHiddenFiles]
+                includingPropertiesForKeys: [.isApplicationKey, .applicationIsScriptableKey],
+                options: [.skipsHiddenFiles, .skipsPackageDescendants]
             ) {
                 for appURL in appURLs {
-                    if appURL.pathExtension == "app" {
+                    // Filter duplicates
+                    if seenURLs.contains(appURL) { continue }
+                    
+                    // Strict filtering
+                    let ext = appURL.pathExtension
+                    if ext == "app" {
+                        // Exclude .appex or embedded apps if any slip through
+                        if appURL.path.contains(".appex") { continue }
+                        
                         if let appInfo = AppInfo(url: appURL) {
                             apps.append(appInfo)
+                            seenURLs.insert(appURL)
                         }
                     }
                 }
