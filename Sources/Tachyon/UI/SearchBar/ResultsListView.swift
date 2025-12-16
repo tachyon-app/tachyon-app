@@ -1,114 +1,155 @@
 import SwiftUI
 
-/// List of search results
+/// List of search results with premium dark design
 struct ResultsListView: View {
     let results: [QueryResult]
     let selectedIndex: Int
     let onSelect: (Int) -> Void
     let onExecute: (QueryResult) -> Void
     
+    @State private var isUsingKeyboard = false
+    
     var body: some View {
-        ScrollView {
-            VStack(spacing: 0) { // Removed spacing for cleaner look
-                ForEach(Array(results.enumerated()), id: \.element.id) { index, result in
-                    ResultRowView(
-                        result: result,
-                        isSelected: index == selectedIndex
-                    )
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        onExecute(result)
-                    }
-                    .onHover { hovering in
-                        if hovering {
-                            onSelect(index)
+        ScrollViewReader { proxy in
+            ScrollView {
+                VStack(spacing: 0) {
+                    ForEach(Array(results.enumerated()), id: \.element.id) { index, result in
+                        ResultRowView(
+                            result: result,
+                            isSelected: index == selectedIndex,
+                            allowHover: !isUsingKeyboard
+                        )
+                        .id(index) // Important for ScrollViewReader
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            isUsingKeyboard = false // Mouse click
+                            onExecute(result)
+                        }
+                        .onHover { hovering in
+                            if hovering && !isUsingKeyboard {
+                                onSelect(index)
+                            }
                         }
                     }
                 }
             }
-            .padding(6)
+            .frame(height: min(CGFloat(results.count) * 56, 448)) // 8 rows max
+            .scrollIndicators(.hidden)
+            .onChange(of: selectedIndex) { newIndex in
+                // Mark that keyboard is being used
+                isUsingKeyboard = true
+                
+                // Scroll to selected item WITHOUT animation (prevents flicker)
+                proxy.scrollTo(newIndex, anchor: .center)
+                
+                // Reset keyboard flag after a delay (allow mouse again)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    isUsingKeyboard = false
+                }
+            }
         }
-        // Calculate height: ~62 per row + padding
-        // Limit to max ~6.5 items (400px)
-        .frame(height: min(CGFloat(results.count) * 62 + 12, 400))
-        .scrollIndicators(.hidden)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(.ultraThinMaterial)
-        )
     }
 }
 
-/// Individual result row
+/// Individual result row with purple branding
 struct ResultRowView: View {
     let result: QueryResult
     let isSelected: Bool
+    let allowHover: Bool
+    @State private var isHovered = false
     
     var body: some View {
-        HStack(spacing: 16) {
-            // Icon
+        HStack(spacing: 12) {
             // Icon
             if let iconData = result.iconData, let image = NSImage(data: iconData) {
-                 Image(nsImage: image)
+                Image(nsImage: image)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(width: 32, height: 32)
             } else if let iconPath = result.iconPath {
-                 if iconPath.hasSuffix(".app") {
-                     Image(nsImage: NSWorkspace.shared.icon(forFile: iconPath))
+                if iconPath.hasSuffix(".app") {
+                    Image(nsImage: NSWorkspace.shared.icon(forFile: iconPath))
                         .resizable()
                         .aspectRatio(contentMode: .fit)
                         .frame(width: 32, height: 32)
-                 } else if let image = NSImage(contentsOfFile: iconPath) {
-                     Image(nsImage: image)
+                } else if let image = NSImage(contentsOfFile: iconPath) {
+                    Image(nsImage: image)
                         .resizable()
                         .aspectRatio(contentMode: .fit)
                         .frame(width: 32, height: 32)
-                 } else {
-                     // Fallback for broken paths
-                     Image(systemName: "doc.fill")
-                        .font(.system(size: 22))
-                        .foregroundColor(.secondary)
+                } else {
+                    Image(systemName: "doc.fill")
+                        .font(.system(size: 20))
+                        .foregroundColor(Color.white.opacity(0.6))
                         .frame(width: 32, height: 32)
-                 }
+                }
             } else if let icon = result.icon {
-                // Fixed: Use Image(systemName:) instead of Text(icon)
                 Image(systemName: icon)
-                    .font(.system(size: 22))
+                    .font(.system(size: 20))
+                    .foregroundColor(Color.white.opacity(0.6))
                     .frame(width: 32, height: 32)
             } else {
                 Image(systemName: "app.fill")
-                    .font(.system(size: 22))
-                    .foregroundColor(isSelected ? .white : .secondary)
+                    .font(.system(size: 20))
+                    .foregroundColor(Color.white.opacity(0.6))
                     .frame(width: 32, height: 32)
             }
             
             // Title and subtitle
             VStack(alignment: .leading, spacing: 2) {
                 Text(result.title)
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundColor(isSelected ? .white : .primary)
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundColor(.white)
                 
                 if let subtitle = result.subtitle {
                     Text(subtitle)
-                        .font(.system(size: 12))
-                        .foregroundColor(isSelected ? .white.opacity(0.8) : .secondary)
+                        .font(.system(size: 13))
+                        .foregroundColor(Color.white.opacity(0.6))
                         .lineLimit(1)
                         .truncationMode(.middle)
                 }
             }
             
             Spacer()
+            
+            // Shortcut hint (only for selected)
+            if isSelected {
+                Text("⌘ ↵")
+                    .font(.system(size: 12, design: .monospaced))
+                    .foregroundColor(Color.white.opacity(0.4))
+            }
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
         .background(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .fill(isSelected ? Color.accentColor : Color.clear)
+            ZStack {
+                // Hover state (only if allowed)
+                if isHovered && !isSelected && allowHover {
+                    Color.white.opacity(0.05)
+                }
+                
+                // Selected state with purple
+                if isSelected {
+                    HStack(spacing: 0) {
+                        // Blue left border
+                        Rectangle()
+                            .fill(Color(hex: "#3B86F7"))
+                            .frame(width: 3)
+                        
+                        // Blue background
+                        Color(hex: "#3B86F7")
+                            .opacity(0.15)
+                    }
+                }
+            }
         )
-        // Ensure high contrast for selection
-        .padding(.horizontal, 4)
-        .animation(.easeOut(duration: 0.15), value: isSelected)
+        .onHover { hovering in
+            if allowHover {
+                withAnimation(.easeOut(duration: 0.1)) {
+                    isHovered = hovering
+                }
+            }
+        }
+        .animation(.easeOut(duration: 0.08), value: isSelected)
     }
 }

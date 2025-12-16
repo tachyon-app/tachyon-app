@@ -20,17 +20,19 @@ struct SearchBarView: View {
                 }
             )
         } else {
-            // Show normal search interface
+            // Show normal search interface with premium dark design
             VStack(spacing: 0) {
-                // Search input
-                HStack(spacing: 16) {
+                // Search input area
+                HStack(spacing: 12) {
+                    // Purple search icon
                     Image(systemName: "magnifyingglass")
-                        .font(.system(size: 22, weight: .medium))
-                        .foregroundColor(.secondary)
+                        .font(.system(size: 18, weight: .medium))
+                        .foregroundColor(Color(hex: "#3B86F7"))
                     
-                    TextField("Search...", text: $viewModel.query)
+                    TextField("Search for apps and commands...", text: $viewModel.query)
                         .textFieldStyle(.plain)
-                        .font(.system(size: 26, weight: .light))
+                        .font(.system(size: 20, weight: .regular, design: .default))
+                        .foregroundColor(.white)
                         .focused($isSearchFocused)
                         .onSubmit {
                             viewModel.executeSelectedResult()
@@ -42,47 +44,123 @@ struct SearchBarView: View {
                     if !viewModel.query.isEmpty {
                         Button(action: { viewModel.query = "" }) {
                             Image(systemName: "xmark.circle.fill")
-                                .font(.title3)
-                                .foregroundColor(.secondary.opacity(0.8))
+                                .font(.system(size: 16))
+                                .foregroundColor(Color.white.opacity(0.4))
                         }
                         .buttonStyle(.plain)
                     }
                 }
-                .padding(18)
-                .background(Color.white.opacity(0.05)) // Subtle input background
+                .padding(.horizontal, 20)
+                .padding(.vertical, 18)
+                .background(
+                    Color.black.opacity(0.15)
+                )
                 
-                Divider()
-                    .opacity(0.2)
+                // Divider
+                Rectangle()
+                    .fill(Color.white.opacity(0.08))
+                    .frame(height: 1)
                 
                 // Results list
                 if !viewModel.results.isEmpty {
-                    VStack(spacing: 0) {
-                        ResultsListView(
-                            results: viewModel.results,
-                            selectedIndex: viewModel.selectedIndex,
-                            onSelect: { index in
-                                viewModel.selectedIndex = index
-                            },
-                            onExecute: { result in
-                                viewModel.execute(result: result)
-                            }
-                        )
-                        // Dynamic height handled by swiftUI, no fixed frame needed
-                    }
+                    ResultsListView(
+                        results: viewModel.results,
+                        selectedIndex: viewModel.selectedIndex,
+                        onSelect: { index in
+                            viewModel.selectedIndex = index
+                        },
+                        onExecute: { result in
+                            viewModel.execute(result: result)
+                        }
+                    )
                     .transition(.move(edge: .top).combined(with: .opacity))
+                    .animation(.easeOut(duration: 0.2), value: viewModel.results.count)
+                    
+                    // Footer with keyboard hints
+                    HStack(spacing: 20) {
+                        HStack(spacing: 6) {
+                            Text("↵")
+                                .font(.system(size: 12, design: .monospaced))
+                                .foregroundColor(Color(hex: "#3B86F7"))
+                            Text("Open")
+                                .font(.system(size: 12))
+                                .foregroundColor(Color.white.opacity(0.4))
+                        }
+                        
+                        HStack(spacing: 6) {
+                            Text("⌘,")
+                                .font(.system(size: 12, design: .monospaced))
+                                .foregroundColor(Color(hex: "#3B86F7"))
+                            Text("Settings")
+                                .font(.system(size: 12))
+                                .foregroundColor(Color.white.opacity(0.4))
+                        }
+                        
+                        HStack(spacing: 6) {
+                            Text("⎋")
+                                .font(.system(size: 12, design: .monospaced))
+                                .foregroundColor(Color(hex: "#3B86F7"))
+                            Text("Close")
+                                .font(.system(size: 12))
+                                .foregroundColor(Color.white.opacity(0.4))
+                        }
+                        
+                        Spacer()
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 12)
+                    .background(Color.black.opacity(0.2))
+                    .overlay(
+                        Rectangle()
+                            .fill(Color.white.opacity(0.08))
+                            .frame(height: 1),
+                        alignment: .top
+                    )
                 }
             }
-            .frame(width: 650) // Slightly wider for a grander feel
+            .frame(width: 680)
             .background(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(.ultraThinMaterial)
-                    .shadow(color: .black.opacity(0.2), radius: 30, y: 15)
-                    // Add a subtle border for contrast
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .stroke(Color.white.opacity(0.2), lineWidth: 0.5)
+                ZStack {
+                    // Dark gradient background
+                    LinearGradient(
+                        colors: [
+                            Color(hex: "#1a1a1a"),
+                            Color(hex: "#1f1f1f")
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                    
+                    // Subtle blue glow at top
+                    RadialGradient(
+                        colors: [
+                            Color(hex: "#3B86F7").opacity(0.05),
+                            Color.clear
+                        ],
+                        center: .top,
+                        startRadius: 0,
+                        endRadius: 300
+                    )
+                }
+            )
+            .cornerRadius(12)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(
+                        LinearGradient(
+                            colors: [
+                                Color(hex: "#3B86F7").opacity(0.2),
+                                Color.white.opacity(0.1)
+                            ],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        ),
+                        lineWidth: 1
                     )
             )
+            .shadow(color: Color.black.opacity(0.5), radius: 60, y: 30)
+            .shadow(color: Color.black.opacity(0.3), radius: 20, y: 10)
+            .shadow(color: Color(hex: "#3B86F7").opacity(0.1), radius: 40, y: 0)
             .onAppear {
                 isSearchFocused = true
             }
@@ -90,9 +168,6 @@ struct SearchBarView: View {
                 viewModel.onHideWindow?()
             }
             .onHeightChange { height in
-                // Notify window to resize
-                // We need a way to pass this back to the window
-                // For now, we'll use a callback in the ViewModel or a closure passed to the view
                 viewModel.onHeightChanged?(height)
             }
         }
@@ -192,6 +267,7 @@ class SearchBarViewModel: ObservableObject {
         print("🔍 performSearch called with query: '\(query)'")
         if query.isEmpty {
             results = []
+            selectedIndex = 0
         } else {
             let searchResults = queryEngine.search(query: query)
             print("📊 Got \(searchResults.count) results")
@@ -199,6 +275,7 @@ class SearchBarViewModel: ObservableObject {
             // Ensure UI update happens on main thread
             Task { @MainActor in
                 self.results = searchResults
+                self.selectedIndex = 0 // Always reset to first item
                 print("🎨 UI updated with \(self.results.count) results")
                 if !self.results.isEmpty {
                     print("✅ First result: \(self.results[0].title)")

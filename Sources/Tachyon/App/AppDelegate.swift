@@ -44,7 +44,15 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         
         if let button = statusItem?.button {
-            button.image = NSImage(systemSymbolName: "bolt.fill", accessibilityDescription: "Tachyon")
+            // Use custom logo icon
+            if let logoImage = NSImage(contentsOfFile: "/Users/pablo/code/flashcast/Resources/icon.png") {
+                logoImage.size = NSSize(width: 18, height: 18)
+                logoImage.isTemplate = true // Makes it adapt to menu bar theme
+                button.image = logoImage
+            } else {
+                // Fallback to system icon
+                button.image = NSImage(systemSymbolName: "bolt.fill", accessibilityDescription: "Tachyon")
+            }
         }
         
         let menu = NSMenu()
