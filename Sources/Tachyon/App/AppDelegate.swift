@@ -128,7 +128,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             
             let window = NSWindow(contentViewController: hostingController)
             window.title = "Tachyon Settings"
-            window.styleMask = [.titled, .closable, .miniaturizable, .resizable]
+            window.styleMask = [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView]
+            window.titlebarAppearsTransparent = true
+            window.titleVisibility = .hidden
+            window.isOpaque = false
+            window.backgroundColor = .clear
             window.setContentSize(NSSize(width: 800, height: 600))
             window.center()
             
