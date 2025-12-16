@@ -35,9 +35,9 @@ public struct SettingsView: View {
             VStack(spacing: 0) {
                 // Title bar area with tabs
                 VStack(spacing: 0) {
-                    // Spacer for macOS traffic lights
+                    // Spacer for macOS traffic lights (reduced for tighter spacing)
                     Spacer()
-                        .frame(height: 52)
+                        .frame(height: 32)
                     
                     // Centered tabs
                     HStack(spacing: 0) {
@@ -107,6 +107,7 @@ struct TabButton: View {
             }
             .frame(width: 90)
             .padding(.vertical, 8)
+            .contentShape(Rectangle()) // Make entire area clickable
             .background(
                 Color.clear
             )
@@ -133,70 +134,79 @@ struct TabButton: View {
 struct GeneralSettingsView: View {
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 32) {
-                // Header with logo
-                VStack(alignment: .leading, spacing: 8) {
-                    if let logoImage = NSImage(contentsOfFile: "/Users/pablo/code/flashcast/Resources/Logo.png") {
-                        Image(nsImage: logoImage)
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(width: 64, height: 64)
-                    }
-                    
-                    Text("Tachyon")
-                        .font(.system(size: 28, weight: .semibold))
-                        .foregroundColor(.white)
-                    
-                    Text("Blazing fast productivity launcher for macOS")
-                        .font(.system(size: 14))
-                        .foregroundColor(Color.white.opacity(0.6))
-                }
+            HStack {
+                Spacer()
                 
-                // Global Hotkey Section
-                SettingsSection(title: "Global Hotkey") {
-                    SettingsRow(label: "Show Tachyon") {
-                        HStack(spacing: 6) {
-                            Text("⌘")
-                                .font(.system(size: 13, design: .monospaced))
-                            Text("Space")
-                                .font(.system(size: 13, design: .monospaced))
+                VStack(alignment: .leading, spacing: 32) {
+                    // Header with logo
+                    VStack(alignment: .leading, spacing: 8) {
+                        if let logoImage = NSImage(contentsOfFile: "/Users/pablo/code/flashcast/Resources/Logo.png") {
+                            Image(nsImage: logoImage)
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 64, height: 64)
                         }
-                        .foregroundColor(Color.white.opacity(0.8))
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 6)
-                        .background(Color(hex: "#2a2a2a"))
-                        .cornerRadius(4)
+                        
+                        Text("Tachyon")
+                            .font(.system(size: 28, weight: .semibold))
+                            .foregroundColor(.white)
+                        
+                        Text("Blazing fast productivity launcher for macOS")
+                            .font(.system(size: 14))
+                            .foregroundColor(Color.white.opacity(0.6))
                     }
                     
-                    Text("To use ⌘Space, disable Spotlight's keyboard shortcut in System Settings → Keyboard → Keyboard Shortcuts → Spotlight.")
-                        .font(.system(size: 12))
-                        .foregroundColor(Color.white.opacity(0.4))
-                        .padding(.top, 4)
+                    // Global Hotkey Section
+                    SettingsSection(title: "Global Hotkey") {
+                        SettingsRow(label: "Show Tachyon") {
+                            HStack(spacing: 6) {
+                                Text("⌘")
+                                    .font(.system(size: 13, design: .monospaced))
+                                Text("Space")
+                                    .font(.system(size: 13, design: .monospaced))
+                            }
+                            .foregroundColor(Color.white.opacity(0.8))
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .background(Color(hex: "#2a2a2a"))
+                            .cornerRadius(4)
+                        }
+                        
+                        Text("To use ⌘Space, disable Spotlight's keyboard shortcut in System Settings → Keyboard → Keyboard Shortcuts → Spotlight.")
+                            .font(.system(size: 12))
+                            .foregroundColor(Color.white.opacity(0.4))
+                            .padding(.top, 4)
+                    }
+                    
+                    Divider()
+                        .background(Color.white.opacity(0.1))
+                    
+                    // Settings Hotkey Section
+                    SettingsSection(title: "Settings") {
+                        SettingsRow(label: "Open Settings") {
+                            HStack(spacing: 6) {
+                                Text("⌘")
+                                    .font(.system(size: 13, design: .monospaced))
+                                Text(",")
+                                    .font(.system(size: 13, design: .monospaced))
+                            }
+                            .foregroundColor(Color.white.opacity(0.8))
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .background(Color(hex: "#2a2a2a"))
+                            .cornerRadius(4)
+                        }
+                        
+                        Text("Press ⌘, while the search bar is focused to open settings.")
+                            .font(.system(size: 12))
+                            .foregroundColor(Color.white.opacity(0.4))
+                            .padding(.top, 4)
+                    }
                 }
+                .frame(maxWidth: 600)
                 
-                // Settings Hotkey Section
-                SettingsSection(title: "Settings") {
-                    SettingsRow(label: "Open Settings") {
-                        HStack(spacing: 6) {
-                            Text("⌘")
-                                .font(.system(size: 13, design: .monospaced))
-                            Text(",")
-                                .font(.system(size: 13, design: .monospaced))
-                        }
-                        .foregroundColor(Color.white.opacity(0.8))
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 6)
-                        .background(Color(hex: "#2a2a2a"))
-                        .cornerRadius(4)
-                    }
-                    
-                    Text("Press ⌘, while the search bar is focused to open settings.")
-                        .font(.system(size: 12))
-                        .foregroundColor(Color.white.opacity(0.4))
-                        .padding(.top, 4)
-                }
+                Spacer()
             }
-            .padding(.horizontal, 60)
             .padding(.vertical, 40)
         }
     }
@@ -206,42 +216,54 @@ struct GeneralSettingsView: View {
 struct HotkeysSettingsView: View {
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 32) {
-                Text("Keyboard Shortcuts")
-                    .font(.system(size: 24, weight: .semibold))
-                    .foregroundColor(.white)
+            HStack {
+                Spacer()
                 
-                SettingsSection(title: "Search Bar") {
-                    SettingsRow(label: "Toggle Search Bar") {
-                        KeyboardShortcutView(keys: ["⌘", "Space"])
+                VStack(alignment: .leading, spacing: 32) {
+                    Text("Keyboard Shortcuts")
+                        .font(.system(size: 24, weight: .semibold))
+                        .foregroundColor(.white)
+                    
+                    SettingsSection(title: "Search Bar") {
+                        SettingsRow(label: "Toggle Search Bar") {
+                            KeyboardShortcutView(keys: ["⌘", "Space"])
+                        }
+                        SettingsRow(label: "Close Search Bar") {
+                            KeyboardShortcutView(keys: ["⎋"])
+                        }
                     }
-                    SettingsRow(label: "Close Search Bar") {
-                        KeyboardShortcutView(keys: ["⎋"])
+                    
+                    Divider()
+                        .background(Color.white.opacity(0.1))
+                    
+                    SettingsSection(title: "Navigation") {
+                        SettingsRow(label: "Next Result") {
+                            KeyboardShortcutView(keys: ["↓"])
+                        }
+                        SettingsRow(label: "Previous Result") {
+                            KeyboardShortcutView(keys: ["↑"])
+                        }
+                        SettingsRow(label: "Execute Result") {
+                            KeyboardShortcutView(keys: ["↵"])
+                        }
+                    }
+                    
+                    Divider()
+                        .background(Color.white.opacity(0.1))
+                    
+                    SettingsSection(title: "Settings") {
+                        SettingsRow(label: "Open Settings") {
+                            KeyboardShortcutView(keys: ["⌘", ","])
+                        }
+                        SettingsRow(label: "Close Settings") {
+                            KeyboardShortcutView(keys: ["⎋"])
+                        }
                     }
                 }
+                .frame(maxWidth: 600)
                 
-                SettingsSection(title: "Navigation") {
-                    SettingsRow(label: "Next Result") {
-                        KeyboardShortcutView(keys: ["↓"])
-                    }
-                    SettingsRow(label: "Previous Result") {
-                        KeyboardShortcutView(keys: ["↑"])
-                    }
-                    SettingsRow(label: "Execute Result") {
-                        KeyboardShortcutView(keys: ["↵"])
-                    }
-                }
-                
-                SettingsSection(title: "Settings") {
-                    SettingsRow(label: "Open Settings") {
-                        KeyboardShortcutView(keys: ["⌘", ","])
-                    }
-                    SettingsRow(label: "Close Settings") {
-                        KeyboardShortcutView(keys: ["⎋"])
-                    }
-                }
+                Spacer()
             }
-            .padding(.horizontal, 60)
             .padding(.vertical, 40)
         }
     }

@@ -49,6 +49,7 @@ struct SearchEnginesSettingsView: View {
                 .onDelete(perform: viewModel.deleteEngineAt)
             }
             .listStyle(.inset)
+            .scrollContentBackground(.hidden)
             
             HStack {
                 Spacer()

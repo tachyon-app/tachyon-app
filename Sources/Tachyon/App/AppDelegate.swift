@@ -121,16 +121,18 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     public func openSettings() {
         // Hide search bar when opening settings
         searchBarWindow?.hide()
+        searchBarWindow?.disableEventHandling()
+        print("⚙️ Settings opened - search bar event handling DISABLED")
         
         if settingsWindow == nil {
             let settingsView = SettingsView()
             let hostingController = NSHostingController(rootView: settingsView)
             
-            let window = NSWindow(contentViewController: hostingController)
+            // Use custom SettingsWindow that handles Escape key
+            let window = SettingsWindow(contentViewController: hostingController)
             window.title = "Tachyon Settings"
             window.styleMask = [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView]
             window.titlebarAppearsTransparent = true
-            window.titleVisibility = .hidden
             window.isOpaque = false
             window.backgroundColor = .clear
             window.setContentSize(NSSize(width: 800, height: 600))
@@ -152,6 +154,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         // If the settings window is closing, nil it out so it can be recreated if opened again
         if notification.object as? NSWindow == settingsWindow {
             settingsWindow = nil
+            // Re-enable search bar event handling
+            searchBarWindow?.enableEventHandling()
+            print("✅ Settings closed - search bar event handling RE-ENABLED")
         }
     }
     
@@ -162,6 +167,21 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     // triggers `cancelOperation(_:)` which can lead to `windowWillClose`.
     // By simply setting the delegate, we allow the default system behavior
     // for Escape to close the window, and then `windowWillClose` handles cleanup.
+}
+
+// MARK: - Settings Window
+
+/// Custom window for settings that properly handles Escape key
+class SettingsWindow: NSWindow {
+    override func keyDown(with event: NSEvent) {
+        // Handle Escape key (keyCode 53)
+        if event.keyCode == 53 {
+            print("⎋ Escape pressed in SettingsWindow - closing")
+            self.close()
+        } else {
+            super.keyDown(with: event)
+        }
+    }
 }
 
 // MARK: - Helper Extension

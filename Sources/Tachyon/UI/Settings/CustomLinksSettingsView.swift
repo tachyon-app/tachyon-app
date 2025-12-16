@@ -64,6 +64,7 @@ struct CustomLinksSettingsView: View {
                 .onDelete(perform: viewModel.deleteLinkAt)
             }
             .listStyle(.inset)
+            .scrollContentBackground(.hidden)
             
             HStack {
                 Spacer()

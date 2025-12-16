@@ -7,6 +7,7 @@ public class SearchBarWindow: NSWindow {
     private let searchBarView: SearchBarView
     private let viewModel = SearchBarViewModel() // Own the ViewModel
     private var localEventMonitor: Any?
+    private var shouldHandleEvents = true
     
     /// Callback to open settings
     public var onOpenSettings: (() -> Void)?
@@ -71,8 +72,21 @@ public class SearchBarWindow: NSWindow {
         
         // Monitor for Escape key and Cmd+,
         localEventMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            guard let self = self, self.isKeyWindow else {
-                // Only handle events when this window is the key window
+            guard let self = self else { return event }
+            
+            // Debug logging
+            if event.keyCode == 53 { // Escape key
+                print("🔍 Escape key detected in SearchBarWindow")
+                print("   shouldHandleEvents: \(self.shouldHandleEvents)")
+                print("   isKeyWindow: \(self.isKeyWindow)")
+                print("   isVisible: \(self.isVisible)")
+            }
+            
+            guard self.shouldHandleEvents, self.isKeyWindow && self.isVisible else {
+                // Only handle events when enabled, key window, and visible
+                if event.keyCode == 53 {
+                    print("   ❌ Not handling - guard failed")
+                }
                 return event
             }
             
@@ -86,7 +100,7 @@ public class SearchBarWindow: NSWindow {
             }
             
             if event.keyCode == 53 { // 53 is Escape
-                print("🛑 Escape detected in monitor")
+                print("🛑 Escape detected in monitor - hiding search bar")
                 self.hide()
                 return nil // Consume the event
             } else if event.keyCode == 125 { // Arrow Down
@@ -110,7 +124,7 @@ public class SearchBarWindow: NSWindow {
     }
     
     /// Show the search bar
-    func show() {
+    public func show() {
         // Center on the screen with the cursor
         if let screen = NSScreen.main {
             let screenFrame = screen.visibleFrame
@@ -123,6 +137,7 @@ public class SearchBarWindow: NSWindow {
             self.setFrameOrigin(NSPoint(x: x, y: y))
         }
         
+        shouldHandleEvents = true
         self.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
         
@@ -132,8 +147,19 @@ public class SearchBarWindow: NSWindow {
     
     /// Hide the search bar
     public func hide() {
+        shouldHandleEvents = false
         self.orderOut(nil)
         searchBarView.clearSearch()
+    }
+    
+    /// Disable event handling (e.g., when settings window is open)
+    public func disableEventHandling() {
+        shouldHandleEvents = false
+    }
+    
+    /// Enable event handling
+    public func enableEventHandling() {
+        shouldHandleEvents = true
     }
     
     // Allow clicking through when not focused
