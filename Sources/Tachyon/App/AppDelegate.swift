@@ -7,7 +7,7 @@ import TachyonCore
 /// - Menu bar item
 /// - Global hotkey registration
 /// - Search bar window
-class AppDelegate: NSObject, NSApplicationDelegate {
+class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     
     private var statusItem: NSStatusItem?
     private var searchBarWindow: SearchBarWindow?
@@ -26,6 +26,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         // Create search bar window (hidden initially)
         searchBarWindow = SearchBarWindow()
+        
+        // Pass settings callback to search bar
+        searchBarWindow?.onOpenSettings = { [weak self] in
+            self?.openSettings()
+        }
     }
     
     func applicationWillTerminate(_ notification: Notification) {
@@ -55,16 +60,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - Global Hotkey
     
     private func registerGlobalHotkey() {
-        // Register Cmd+Space
-        var hotKeyID = EventHotKeyID()
-        hotKeyID.signature = OSType("TACH".fourCharCodeValue)
-        hotKeyID.id = 1
-        
         var eventType = EventTypeSpec()
         eventType.eventClass = OSType(kEventClassKeyboard)
         eventType.eventKind = OSType(kEventHotKeyPressed)
         
-        // Install event handler
+        // Install event handler for Cmd+Space
         InstallEventHandler(
             GetApplicationEventTarget(),
             { (_, event, userData) -> OSStatus in
@@ -79,7 +79,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             nil
         )
         
-        // Register hotkey: Cmd+Space (keycode 49 = space)
+        // Register Cmd+Space hotkey
+        var hotKeyID = EventHotKeyID()
+        hotKeyID.signature = OSType("TACH".fourCharCodeValue)
+        hotKeyID.id = 1
+        
         RegisterEventHotKey(
             49, // Space key
             UInt32(cmdKey),
@@ -106,7 +110,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         openSettings()
     }
     
-    func openSettings() {
+    public func openSettings() {
+        // Hide search bar when opening settings
+        searchBarWindow?.hide()
+        
         if settingsWindow == nil {
             let settingsView = SettingsView()
             let hostingController = NSHostingController(rootView: settingsView)
@@ -117,12 +124,32 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             window.setContentSize(NSSize(width: 800, height: 600))
             window.center()
             
+            // Set AppDelegate as the window's delegate to handle events like closing
+            window.delegate = self
+            
             settingsWindow = window
         }
         
         settingsWindow?.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
     }
+    
+    // MARK: - NSWindowDelegate
+    
+    func windowWillClose(_ notification: Notification) {
+        // If the settings window is closing, nil it out so it can be recreated if opened again
+        if notification.object as? NSWindow == settingsWindow {
+            settingsWindow = nil
+        }
+    }
+    
+    // This method is called when the user presses the Escape key
+    // for a window that is the first responder and has a cancel button,
+    // or if the window's content view handles it.
+    // For a standard window with a closable style, pressing Escape usually
+    // triggers `cancelOperation(_:)` which can lead to `windowWillClose`.
+    // By simply setting the delegate, we allow the default system behavior
+    // for Escape to close the window, and then `windowWillClose` handles cleanup.
 }
 
 // MARK: - Helper Extension

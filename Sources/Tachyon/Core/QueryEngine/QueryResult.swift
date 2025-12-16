@@ -11,6 +11,7 @@ public struct QueryResult: Identifiable {
     public let action: () -> Void
     public var score: Double = 0.0
     public let alwaysShow: Bool // If true, result is shown even if score is 0
+    public let hideWindowAfterExecution: Bool // If false, window stays open after action
     
     public init(
         id: UUID = UUID(),
@@ -20,6 +21,7 @@ public struct QueryResult: Identifiable {
         iconPath: String? = nil,
         iconData: Data? = nil,
         alwaysShow: Bool = false,
+        hideWindowAfterExecution: Bool = true,
         action: @escaping () -> Void
     ) {
         self.id = id
@@ -29,6 +31,7 @@ public struct QueryResult: Identifiable {
         self.iconPath = iconPath
         self.iconData = iconData
         self.alwaysShow = alwaysShow
+        self.hideWindowAfterExecution = hideWindowAfterExecution
         self.action = action
     }
 }

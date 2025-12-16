@@ -38,7 +38,7 @@ public struct SettingsView: View {
                 case .scripts:
                     PlaceholderSettingsView(title: "Script Settings")
                 case .customLinks:
-                    PlaceholderSettingsView(title: "Custom Links Settings")
+                    CustomLinksSettingsView()
                 case .windowSnapping:
                     PlaceholderSettingsView(title: "Window Snapping Settings")
                 case .clipboard:
@@ -55,6 +55,10 @@ public struct SettingsView: View {
             .padding()
         }
         .frame(minWidth: 700, minHeight: 500)
+        .onExitCommand {
+            // Close the settings window when Escape is pressed
+            NSApp.keyWindow?.close()
+        }
     }
     
     private func iconForTab(_ tab: SettingsTab) -> String {

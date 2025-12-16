@@ -139,6 +139,9 @@ struct AddEditSearchEngineView: View {
                 iconData = engine.icon
             }
         }
+        .onExitCommand {
+            isPresented = false
+        }
         .onChange(of: urlTemplate) { newValue in
             // Basic debounce logic could go here, or just wait for user to finish
         }

@@ -2,11 +2,14 @@ import Cocoa
 import SwiftUI
 
 /// Floating search bar window
-public class SearchBarWindow: NSPanel {
+public class SearchBarWindow: NSWindow {
     
     private let searchBarView: SearchBarView
     private let viewModel = SearchBarViewModel() // Own the ViewModel
     private var localEventMonitor: Any?
+    
+    /// Callback to open settings
+    public var onOpenSettings: (() -> Void)?
     
     public init() {
         // Create the SwiftUI view with the ViewModel
@@ -66,18 +69,31 @@ public class SearchBarWindow: NSPanel {
             }
         }
         
-        // Monitor for Escape key
+        // Monitor for Escape key and Cmd+,
         localEventMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            guard let self = self, self.isKeyWindow else {
+                // Only handle events when this window is the key window
+                return event
+            }
+            
             print("🔑 Key pressed: \(event.keyCode)")
+            
+            // Check for Cmd+, (keycode 43)
+            if event.keyCode == 43 && event.modifierFlags.contains(.command) {
+                print("⚙️ Cmd+, detected - opening settings")
+                self.onOpenSettings?()
+                return nil // Consume the event
+            }
+            
             if event.keyCode == 53 { // 53 is Escape
                 print("🛑 Escape detected in monitor")
-                self?.hide()
+                self.hide()
                 return nil // Consume the event
             } else if event.keyCode == 125 { // Arrow Down
-                self?.viewModel.selectNext()
+                self.viewModel.selectNext()
                 return nil
             } else if event.keyCode == 126 { // Arrow Up
-                self?.viewModel.selectPrevious()
+                self.viewModel.selectPrevious()
                 return nil
             }
             return event
@@ -115,7 +131,7 @@ public class SearchBarWindow: NSPanel {
     }
     
     /// Hide the search bar
-    func hide() {
+    public func hide() {
         self.orderOut(nil)
         searchBarView.clearSearch()
     }

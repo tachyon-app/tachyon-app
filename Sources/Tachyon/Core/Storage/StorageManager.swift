@@ -10,6 +10,16 @@ public class StorageManager {
         try? setupDatabase()
     }
     
+    public func setupInMemoryDatabase() throws {
+        // Create in-memory database queue
+        var config = Configuration()
+        config.prepareDatabase { db in
+            db.trace { print("SQL: \($0)") }
+        }
+        dbQueue = try DatabaseQueue(configuration: config) // In-memory
+        try migrator.migrate(dbQueue!)
+    }
+    
     private func setupDatabase() throws {
         let fileManager = FileManager.default
         let homeUrl = fileManager.homeDirectoryForCurrentUser
@@ -44,6 +54,16 @@ public class StorageManager {
             
             // Seed default data
             try self?.seedDefaults(db)
+        }
+        
+        migrator.registerMigration("v2") { db in
+            try db.create(table: "custom_links") { t in
+                t.column("id", .text).primaryKey()
+                t.column("name", .text).notNull()
+                t.column("urlTemplate", .text).notNull()
+                t.column("icon", .blob)
+                t.column("defaults", .jsonText).notNull().defaults(to: "{}")
+            }
         }
         
         return migrator
@@ -94,6 +114,26 @@ public class StorageManager {
     public func deleteSearchEngine(id: UUID) throws {
         _ = try dbQueue?.write { db in
             try SearchEngineRecord.deleteOne(db, key: id)
+        }
+    }
+    
+    // MARK: - Custom Links
+    
+    public func getAllCustomLinks() throws -> [CustomLinkRecord] {
+        return try dbQueue?.read { db in
+             try CustomLinkRecord.fetchAll(db)
+        } ?? []
+    }
+    
+    public func saveCustomLink(_ link: CustomLinkRecord) throws {
+        try dbQueue?.write { db in
+            try link.save(db)
+        }
+    }
+    
+    public func deleteCustomLink(id: UUID) throws {
+        _ = try dbQueue?.write { db in
+            try CustomLinkRecord.deleteOne(db, key: id)
         }
     }
 }

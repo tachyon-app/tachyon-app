@@ -6,79 +6,95 @@ struct SearchBarView: View {
     @FocusState private var isSearchFocused: Bool
     
     var body: some View {
-        VStack(spacing: 0) {
-            // Search input
-            HStack(spacing: 16) {
-                Image(systemName: "magnifyingglass")
-                    .font(.system(size: 22, weight: .medium))
-                    .foregroundColor(.secondary)
-                
-                TextField("Search...", text: $viewModel.query)
-                    .textFieldStyle(.plain)
-                    .font(.system(size: 26, weight: .light))
-                    .focused($isSearchFocused)
-                    .onSubmit {
-                        viewModel.executeSelectedResult()
-                    }
-                    .onExitCommand {
-                        viewModel.onHideWindow?()
-                    }
-                
-                if !viewModel.query.isEmpty {
-                    Button(action: { viewModel.query = "" }) {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.title3)
-                            .foregroundColor(.secondary.opacity(0.8))
-                    }
-                    .buttonStyle(.plain)
+        if let link = viewModel.showingLinkForm {
+            // Show link input form
+            LinkInputFormView(
+                link: link,
+                onExecute: { url in
+                    NSWorkspace.shared.open(url)
+                    viewModel.showingLinkForm = nil
+                    viewModel.onHideWindow?()
+                },
+                onCancel: {
+                    viewModel.showingLinkForm = nil
                 }
-            }
-            .padding(18)
-            .background(Color.white.opacity(0.05)) // Subtle input background
-            
-            Divider()
-                .opacity(0.2)
-            
-            // Results list
-            if !viewModel.results.isEmpty {
-                VStack(spacing: 0) {
-                    ResultsListView(
-                        results: viewModel.results,
-                        selectedIndex: viewModel.selectedIndex,
-                        onSelect: { index in
-                            viewModel.selectedIndex = index
-                        },
-                        onExecute: { result in
-                            viewModel.execute(result: result)
+            )
+        } else {
+            // Show normal search interface
+            VStack(spacing: 0) {
+                // Search input
+                HStack(spacing: 16) {
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 22, weight: .medium))
+                        .foregroundColor(.secondary)
+                    
+                    TextField("Search...", text: $viewModel.query)
+                        .textFieldStyle(.plain)
+                        .font(.system(size: 26, weight: .light))
+                        .focused($isSearchFocused)
+                        .onSubmit {
+                            viewModel.executeSelectedResult()
                         }
-                    )
-                    // Dynamic height handled by swiftUI, no fixed frame needed
+                        .onExitCommand {
+                            viewModel.onHideWindow?()
+                        }
+                    
+                    if !viewModel.query.isEmpty {
+                        Button(action: { viewModel.query = "" }) {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.title3)
+                                .foregroundColor(.secondary.opacity(0.8))
+                        }
+                        .buttonStyle(.plain)
+                    }
                 }
-                .transition(.move(edge: .top).combined(with: .opacity))
+                .padding(18)
+                .background(Color.white.opacity(0.05)) // Subtle input background
+                
+                Divider()
+                    .opacity(0.2)
+                
+                // Results list
+                if !viewModel.results.isEmpty {
+                    VStack(spacing: 0) {
+                        ResultsListView(
+                            results: viewModel.results,
+                            selectedIndex: viewModel.selectedIndex,
+                            onSelect: { index in
+                                viewModel.selectedIndex = index
+                            },
+                            onExecute: { result in
+                                viewModel.execute(result: result)
+                            }
+                        )
+                        // Dynamic height handled by swiftUI, no fixed frame needed
+                    }
+                    .transition(.move(edge: .top).combined(with: .opacity))
+                }
             }
-        }
-        .frame(width: 650) // Slightly wider for a grander feel
-        .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(.ultraThinMaterial)
-                .shadow(color: .black.opacity(0.2), radius: 30, y: 15)
-                // Add a subtle border for contrast
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .stroke(Color.white.opacity(0.2), lineWidth: 0.5)
-                )
-        )
-        .onAppear {
-            isSearchFocused = true
-        }
-        .onExitCommand {
-            viewModel.onHideWindow?()
-        }
-        .onHeightChange { height in
-            // Notify window to resize
-            // We need a way to pass this back to the window
-            // For now, we'll use a callback in the ViewModel or a closure passed to the view
-            viewModel.onHeightChanged?(height)
+            .frame(width: 650) // Slightly wider for a grander feel
+            .background(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(.ultraThinMaterial)
+                    .shadow(color: .black.opacity(0.2), radius: 30, y: 15)
+                    // Add a subtle border for contrast
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .stroke(Color.white.opacity(0.2), lineWidth: 0.5)
+                    )
+            )
+            .onAppear {
+                isSearchFocused = true
+            }
+            .onExitCommand {
+                viewModel.onHideWindow?()
+            }
+            .onHeightChange { height in
+                // Notify window to resize
+                // We need a way to pass this back to the window
+                // For now, we'll use a callback in the ViewModel or a closure passed to the view
+                viewModel.onHeightChanged?(height)
+            }
         }
     }
     
@@ -117,6 +133,7 @@ class SearchBarViewModel: ObservableObject {
     @Published var query: String = ""
     @Published var results: [QueryResult] = []
     @Published var selectedIndex: Int = 0
+    @Published var showingLinkForm: CustomLinkRecord? = nil
     
     private let queryEngine = QueryEngine()
     
@@ -127,15 +144,28 @@ class SearchBarViewModel: ObservableObject {
     var onHeightChanged: ((CGFloat) -> Void)?
     
     init() {
+        // Listen for link input form requests
+        NotificationCenter.default.addObserver(
+            forName: NSNotification.Name("ShowLinkInputForm"),
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            if let link = notification.object as? CustomLinkRecord {
+                self?.showingLinkForm = link
+            }
+        }
+        
         // Register plugins
         print("🔌 Registering AppLauncherPlugin...")
         let appLauncher = AppLauncherPlugin()
         queryEngine.register(plugin: appLauncher)
         print("✅ AppLauncherPlugin registered")
         
+        print("🔌 Registering CustomLinksPlugin...")
         let customLinks = CustomLinksPlugin()
         queryEngine.register(plugin: customLinks)
         print("✅ CustomLinksPlugin registered")
+        
         
         let searchEngines = SearchEnginePlugin()
         queryEngine.register(plugin: searchEngines)
@@ -195,8 +225,10 @@ class SearchBarViewModel: ObservableObject {
     
     func execute(result: QueryResult) {
         result.action()
-        // Hide window after execution
-        onHideWindow?()
+        // Hide window after execution only if requested
+        if result.hideWindowAfterExecution {
+            onHideWindow?()
+        }
     }
 }
 
