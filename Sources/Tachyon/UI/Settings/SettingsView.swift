@@ -4,32 +4,31 @@ import SwiftUI
 public struct SettingsView: View {
     @State private var selectedTab: SettingsTab = .general
     
-    enum SettingsTab: String, CaseIterable, Identifiable {
-        case general = "General"
-        case customLinks = "Custom Links"
-        case searchEngines = "Search Engines"
-        case hotkeys = "Hotkeys"
-        
-        var id: String { rawValue }
-        
-        var icon: String {
-            switch self {
-            case .general: return "gearshape.fill"
-            case .customLinks: return "link"
-            case .searchEngines: return "magnifyingglass"
-            case .hotkeys: return "keyboard"
-            }
+  /// Settings tabs
+enum SettingsTab: String, CaseIterable, Identifiable {
+    case general = "General"
+    case sources = "Sources"
+    case hotkeys = "Hotkeys"
+    
+    var id: String { rawValue }
+    
+    var icon: String {
+        switch self {
+        case .general: return "gearshape"
+        case .sources: return "square.grid.2x2"
+        case .hotkeys: return "keyboard"
         }
     }
+}
     
     public init() {}
     
     public var body: some View {
         ZStack {
-            // Translucent background (matching Raycast's vibrancy)
+            // Darker background (matching Raycast)
             Rectangle()
                 .fill(.ultraThinMaterial)
-                .background(Color(hex: "#1e1e1e").opacity(0.85))
+                .background(Color(hex: "#1a1a1a").opacity(0.95))
                 .ignoresSafeArea()
             
             VStack(spacing: 0) {
@@ -67,10 +66,8 @@ public struct SettingsView: View {
                     switch selectedTab {
                     case .general:
                         GeneralSettingsView()
-                    case .customLinks:
-                        CustomLinksSettingsView()
-                    case .searchEngines:
-                        SearchEnginesSettingsView()
+                    case .sources:
+                        SourcesSettingsView()
                     case .hotkeys:
                         HotkeysSettingsView()
                     }
@@ -96,17 +93,17 @@ struct TabButton: View {
     
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 8) {
+            VStack(spacing: 7) {
                 Image(systemName: icon)
-                    .font(.system(size: 18, weight: .regular))
+                    .font(.system(size: 17, weight: .regular))
                     .foregroundColor(isSelected ? .white : Color.white.opacity(0.5))
                 
                 Text(title)
                     .font(.system(size: 11, weight: .medium))
                     .foregroundColor(isSelected ? .white : Color.white.opacity(0.5))
             }
-            .frame(width: 90)
-            .padding(.vertical, 8)
+            .frame(width: 85)
+            .padding(.vertical, 7)
             .contentShape(Rectangle()) // Make entire area clickable
             .background(
                 Color.clear
@@ -119,14 +116,15 @@ struct TabButton: View {
                     .offset(y: 1),
                 alignment: .bottom
             )
-            .opacity(isSelected ? 1.0 : (isHovered ? 0.8 : 1.0))
+            .opacity(isSelected ? 1.0 : (isHovered ? 0.75 : 1.0))
         }
         .buttonStyle(.plain)
         .onHover { hovering in
-            isHovered = hovering
+            withAnimation(.easeOut(duration: 0.12)) {
+                isHovered = hovering
+            }
         }
         .animation(.easeOut(duration: 0.15), value: isSelected)
-        .animation(.easeOut(duration: 0.1), value: isHovered)
     }
 }
 
@@ -137,23 +135,23 @@ struct GeneralSettingsView: View {
             HStack {
                 Spacer()
                 
-                VStack(alignment: .leading, spacing: 32) {
+                VStack(alignment: .leading, spacing: 28) {
                     // Header with logo
-                    VStack(alignment: .leading, spacing: 8) {
+                    VStack(alignment: .leading, spacing: 7) {
                         if let logoImage = NSImage(contentsOfFile: "/Users/pablo/code/flashcast/Resources/Logo.png") {
                             Image(nsImage: logoImage)
                                 .resizable()
                                 .aspectRatio(contentMode: .fit)
-                                .frame(width: 64, height: 64)
+                                .frame(width: 56, height: 56)
                         }
                         
                         Text("Tachyon")
-                            .font(.system(size: 28, weight: .semibold))
+                            .font(.system(size: 26, weight: .semibold))
                             .foregroundColor(.white)
                         
                         Text("Blazing fast productivity launcher for macOS")
-                            .font(.system(size: 14))
-                            .foregroundColor(Color.white.opacity(0.6))
+                            .font(.system(size: 13))
+                            .foregroundColor(Color.white.opacity(0.55))
                     }
                     
                     // Global Hotkey Section
@@ -165,21 +163,21 @@ struct GeneralSettingsView: View {
                                 Text("Space")
                                     .font(.system(size: 13, design: .monospaced))
                             }
-                            .foregroundColor(Color.white.opacity(0.8))
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 6)
-                            .background(Color(hex: "#2a2a2a"))
-                            .cornerRadius(4)
+                            .foregroundColor(Color.white.opacity(0.75))
+                            .padding(.horizontal, 9)
+                            .padding(.vertical, 5)
+                            .background(Color(hex: "#252525"))
+                            .cornerRadius(5)
                         }
                         
                         Text("To use ⌘Space, disable Spotlight's keyboard shortcut in System Settings → Keyboard → Keyboard Shortcuts → Spotlight.")
-                            .font(.system(size: 12))
+                            .font(.system(size: 11))
                             .foregroundColor(Color.white.opacity(0.4))
-                            .padding(.top, 4)
+                            .padding(.top, 6)
                     }
                     
                     Divider()
-                        .background(Color.white.opacity(0.1))
+                        .background(Color.white.opacity(0.06))
                     
                     // Settings Hotkey Section
                     SettingsSection(title: "Settings") {
@@ -278,11 +276,11 @@ struct KeyboardShortcutView: View {
             ForEach(keys, id: \.self) { key in
                 Text(key)
                     .font(.system(size: 13, design: .monospaced))
-                    .foregroundColor(Color.white.opacity(0.8))
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(Color(hex: "#2a2a2a"))
-                    .cornerRadius(4)
+                    .foregroundColor(Color.white.opacity(0.75))
+                    .padding(.horizontal, 9)
+                    .padding(.vertical, 5)
+                    .background(Color(hex: "#252525"))
+                    .cornerRadius(5)
             }
         }
     }
@@ -299,14 +297,14 @@ struct SettingsSection<Content: View>: View {
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 14) {
             Text(title)
-                .font(.system(size: 12, weight: .semibold))
+                .font(.system(size: 11, weight: .semibold))
                 .foregroundColor(Color.white.opacity(0.4))
                 .textCase(.uppercase)
-                .tracking(0.5)
+                .tracking(0.6)
             
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 10) {
                 content
             }
         }
@@ -326,14 +324,14 @@ struct SettingsRow<Content: View>: View {
     var body: some View {
         HStack {
             Text(label)
-                .font(.system(size: 14))
-                .foregroundColor(Color.white.opacity(0.9))
+                .font(.system(size: 13))
+                .foregroundColor(Color.white.opacity(0.85))
             
             Spacer()
             
             control
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 3)
     }
 }
 

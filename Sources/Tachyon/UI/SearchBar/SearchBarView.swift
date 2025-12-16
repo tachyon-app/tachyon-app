@@ -120,8 +120,9 @@ struct SearchBarView: View {
             }
             .frame(width: 680)
             .background(
+                // Dark gradient background with proper corner radius
                 ZStack {
-                    // Dark gradient background
+                    // Main dark gradient background
                     LinearGradient(
                         colors: [
                             Color(hex: "#1a1a1a"),
@@ -142,25 +143,28 @@ struct SearchBarView: View {
                         endRadius: 300
                     )
                 }
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             )
-            .cornerRadius(12)
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(
+                // Subtle border with gradient
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .strokeBorder(
                         LinearGradient(
                             colors: [
-                                Color(hex: "#3B86F7").opacity(0.2),
-                                Color.white.opacity(0.1)
+                                Color.white.opacity(0.15),
+                                Color.white.opacity(0.05)
                             ],
                             startPoint: .top,
                             endPoint: .bottom
                         ),
-                        lineWidth: 1
+                        lineWidth: 0.5
                     )
             )
-            .shadow(color: Color.black.opacity(0.5), radius: 60, y: 30)
-            .shadow(color: Color.black.opacity(0.3), radius: 20, y: 10)
-            .shadow(color: Color(hex: "#3B86F7").opacity(0.1), radius: 40, y: 0)
+            // Layered shadows for depth (Raycast-style)
+            .shadow(color: Color.black.opacity(0.6), radius: 50, x: 0, y: 20)
+            .shadow(color: Color.black.opacity(0.4), radius: 25, x: 0, y: 10)
+            .shadow(color: Color.black.opacity(0.2), radius: 10, x: 0, y: 5)
             .onAppear {
                 isSearchFocused = true
             }

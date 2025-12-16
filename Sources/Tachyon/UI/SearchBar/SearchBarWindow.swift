@@ -29,7 +29,7 @@ public class SearchBarWindow: NSWindow {
         self.level = .floating
         self.backgroundColor = .clear
         self.isOpaque = false
-        self.hasShadow = true
+        self.hasShadow = false  // Disable window shadow - we use SwiftUI shadows instead
         self.contentView = hostingView
         
         // Center on screen
