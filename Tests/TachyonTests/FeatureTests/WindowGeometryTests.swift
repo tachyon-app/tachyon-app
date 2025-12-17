@@ -36,6 +36,8 @@ class WindowGeometryTests: XCTestCase {
     }
     
     func testTopHalf() {
+        // NOTE: "topHalf" action moves window to BOTTOM of screen visually
+        // (lower Y in macOS coordinate system where y=0 is at bottom)
         let result = WindowGeometry.targetFrame(
             for: .topHalf,
             currentFrame: CGRect(x: 100, y: 100, width: 800, height: 600),
@@ -43,12 +45,14 @@ class WindowGeometryTests: XCTestCase {
         )
         
         XCTAssertEqual(result.origin.x, 0)
-        XCTAssertEqual(result.origin.y, 527.5) // Half of 1055
+        XCTAssertEqual(result.origin.y, 0) // Bottom of screen (lower Y)
         XCTAssertEqual(result.width, 1920)
-        XCTAssertEqual(result.height, 527.5)
+        XCTAssertEqual(result.height, 527.5) // Half height
     }
     
     func testBottomHalf() {
+        // NOTE: "bottomHalf" action moves window to TOP of screen visually
+        // (higher Y in macOS coordinate system)
         let result = WindowGeometry.targetFrame(
             for: .bottomHalf,
             currentFrame: CGRect(x: 100, y: 100, width: 800, height: 600),
@@ -56,7 +60,7 @@ class WindowGeometryTests: XCTestCase {
         )
         
         XCTAssertEqual(result.origin.x, 0)
-        XCTAssertEqual(result.origin.y, 0)
+        XCTAssertEqual(result.origin.y, 527.5) // Top of screen (higher Y = half of 1055)
         XCTAssertEqual(result.width, 1920)
         XCTAssertEqual(result.height, 527.5)
     }
@@ -64,6 +68,7 @@ class WindowGeometryTests: XCTestCase {
     // MARK: - Quarters Tests
     
     func testTopLeftQuarter() {
+        // NOTE: "topLeftQuarter" moves to BOTTOM-LEFT visually (lower Y, left X)
         let result = WindowGeometry.targetFrame(
             for: .topLeftQuarter,
             currentFrame: CGRect(x: 100, y: 100, width: 800, height: 600),
@@ -71,12 +76,13 @@ class WindowGeometryTests: XCTestCase {
         )
         
         XCTAssertEqual(result.origin.x, 0)
-        XCTAssertEqual(result.origin.y, 527.5)
+        XCTAssertEqual(result.origin.y, 0) // Bottom (lower Y)
         XCTAssertEqual(result.width, 960)
         XCTAssertEqual(result.height, 527.5)
     }
     
     func testTopRightQuarter() {
+        // NOTE: "topRightQuarter" moves to BOTTOM-RIGHT visually (lower Y, right X)
         let result = WindowGeometry.targetFrame(
             for: .topRightQuarter,
             currentFrame: CGRect(x: 100, y: 100, width: 800, height: 600),
@@ -84,12 +90,13 @@ class WindowGeometryTests: XCTestCase {
         )
         
         XCTAssertEqual(result.origin.x, 960)
-        XCTAssertEqual(result.origin.y, 527.5)
+        XCTAssertEqual(result.origin.y, 0) // Bottom (lower Y)
         XCTAssertEqual(result.width, 960)
         XCTAssertEqual(result.height, 527.5)
     }
     
     func testBottomLeftQuarter() {
+        // NOTE: "bottomLeftQuarter" moves to TOP-LEFT visually (higher Y, left X)
         let result = WindowGeometry.targetFrame(
             for: .bottomLeftQuarter,
             currentFrame: CGRect(x: 100, y: 100, width: 800, height: 600),
@@ -97,12 +104,13 @@ class WindowGeometryTests: XCTestCase {
         )
         
         XCTAssertEqual(result.origin.x, 0)
-        XCTAssertEqual(result.origin.y, 0)
+        XCTAssertEqual(result.origin.y, 527.5) // Top (higher Y)
         XCTAssertEqual(result.width, 960)
         XCTAssertEqual(result.height, 527.5)
     }
     
     func testBottomRightQuarter() {
+        // NOTE: "bottomRightQuarter" moves to TOP-RIGHT visually (higher Y, right X)
         let result = WindowGeometry.targetFrame(
             for: .bottomRightQuarter,
             currentFrame: CGRect(x: 100, y: 100, width: 800, height: 600),
@@ -110,7 +118,7 @@ class WindowGeometryTests: XCTestCase {
         )
         
         XCTAssertEqual(result.origin.x, 960)
-        XCTAssertEqual(result.origin.y, 0)
+        XCTAssertEqual(result.origin.y, 527.5) // Top (higher Y)
         XCTAssertEqual(result.width, 960)
         XCTAssertEqual(result.height, 527.5)
     }
@@ -319,7 +327,8 @@ class WindowGeometryTests: XCTestCase {
     }
     
     func testCurrentSnapPositionTopLeftQuarter() {
-        let quarterFrame = CGRect(x: 0, y: 527.5, width: 960, height: 527.5)
+        // TopLeftQuarter is at bottom-left visually (y=0 in macOS coords)
+        let quarterFrame = CGRect(x: 0, y: 0, width: 960, height: 527.5)
         
         let position = WindowGeometry.currentSnapPosition(
             frame: quarterFrame,

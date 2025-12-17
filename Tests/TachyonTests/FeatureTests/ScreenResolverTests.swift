@@ -123,5 +123,70 @@ class ScreenResolverTests: XCTestCase {
         let next = ScreenResolver.nextScreen(from: screen, direction: .right, screens: screens)
         XCTAssertNil(next) // Or could return same screen
     }
+    
+    // MARK: - Arrangement Orientation Tests
+    
+    func testArrangementOrientationHorizontal() {
+        // Three screens arranged horizontally
+        let screen1 = MockScreen(frame: CGRect(x: 0, y: 0, width: 1920, height: 1080))
+        let screen2 = MockScreen(frame: CGRect(x: 1920, y: 0, width: 1920, height: 1080))
+        let screen3 = MockScreen(frame: CGRect(x: 3840, y: 0, width: 1920, height: 1080))
+        
+        // Note: arrangementOrientation uses NSScreen, so we can't directly test with MockScreen
+        // But we can verify the logic by checking orderedScreens behavior
+        let ordered = ScreenResolver.orderedScreens(screens: [screen3, screen1, screen2])
+        
+        // Should be sorted left to right
+        XCTAssertEqual(ordered[0].frame.origin.x, 0)
+        XCTAssertEqual(ordered[1].frame.origin.x, 1920)
+        XCTAssertEqual(ordered[2].frame.origin.x, 3840)
+    }
+    
+    func testArrangementOrientationVertical() {
+        // Two screens arranged vertically (stacked)
+        let screen1 = MockScreen(frame: CGRect(x: 0, y: 0, width: 1920, height: 1080))
+        let screen2 = MockScreen(frame: CGRect(x: 0, y: 1080, width: 1920, height: 1080))
+        
+        let ordered = ScreenResolver.orderedScreens(screens: [screen1, screen2])
+        
+        // Should be sorted top to bottom (higher y first in macOS coords)
+        XCTAssertEqual(ordered[0].frame.maxY, 2160) // screen2 is at top
+        XCTAssertEqual(ordered[1].frame.maxY, 1080) // screen1 is at bottom
+    }
+    
+    func testArrangementOrientationMixed() {
+        // Screens with vertical offset but predominantly horizontal
+        let screen1 = MockScreen(frame: CGRect(x: 0, y: 0, width: 1920, height: 1080))
+        let screen2 = MockScreen(frame: CGRect(x: 1920, y: -200, width: 1920, height: 1080))
+        
+        let ordered = ScreenResolver.orderedScreens(screens: [screen2, screen1])
+        
+        // Horizontal span is 3840, vertical span is 1280
+        // Since horizontal > vertical, should sort by x
+        XCTAssertEqual(ordered[0].frame.origin.x, 0)
+        XCTAssertEqual(ordered[1].frame.origin.x, 1920)
+    }
+    
+    // MARK: - Traversal Direction Tests
+    
+    func testVerticalTraversalUp() {
+        let screen1 = MockScreen(frame: CGRect(x: 0, y: 0, width: 1920, height: 1080))
+        let screen2 = MockScreen(frame: CGRect(x: 0, y: 1080, width: 1920, height: 1080))
+        let screens = [screen1, screen2]
+        
+        // Going "up" should move to screen with higher y
+        let next = ScreenResolver.nextScreen(from: screen1, direction: .up, screens: screens)
+        XCTAssertEqual(next?.frame.origin.y, 1080)
+    }
+    
+    func testVerticalTraversalDown() {
+        let screen1 = MockScreen(frame: CGRect(x: 0, y: 0, width: 1920, height: 1080))
+        let screen2 = MockScreen(frame: CGRect(x: 0, y: 1080, width: 1920, height: 1080))
+        let screens = [screen1, screen2]
+        
+        // Going "down" should move to screen with lower y
+        let next = ScreenResolver.nextScreen(from: screen2, direction: .down, screens: screens)
+        XCTAssertEqual(next?.frame.origin.y, 0)
+    }
 }
 

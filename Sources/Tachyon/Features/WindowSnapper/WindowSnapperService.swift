@@ -38,11 +38,6 @@ public final class WindowSnapperService {
         let owningScreen = ScreenResolver.owningScreen(for: currentFrame)
         var visibleFrame = owningScreen.visibleFrame
         
-        print("🔍 Screen Debug:")
-        print("  screen.frame: \(owningScreen.frame)")
-        print("  screen.visibleFrame: \(owningScreen.visibleFrame)")
-        print("  currentFrame: \(currentFrame)")
-        
         // IMPORTANT: visibleFrame may not reflect actual usable area due to dock
         // We detect dock offset when window is near the bottom of the screen,
         // then cache it for future use on this screen.
@@ -56,7 +51,6 @@ public final class WindowSnapperService {
         // Try to detect and cache dock offset when window is near bottom
         if isFullWidth && isNearBottom {
             cachedDockOffsets[screenKey] = yOffsetFromBottom
-            print("🔍 Dock offset detected and cached: \(yOffsetFromBottom)px")
         }
         
         // Apply cached dock offset if we have one for this screen
@@ -70,8 +64,6 @@ public final class WindowSnapperService {
                 width: visibleFrame.width,
                 height: visibleFrame.height  // Height stays the same!
             )
-            print("🔍 Using cached dock offset: \(dockOffset)px")
-            print("🔍 Adjusted visibleFrame: \(adjustedVisibleFrame)")
         }
         
         // Check if we're at an edge and should traverse
@@ -207,8 +199,6 @@ public final class WindowSnapperService {
             direction = .right
         }
         
-        print("🔍 Display move: orientation=\(orientation), direction=\(direction)")
-        
         guard let nextScreen = ScreenResolver.nextScreen(from: currentScreen, direction: direction) else {
             // Only one screen, do nothing
             return
@@ -220,22 +210,12 @@ public final class WindowSnapperService {
         let relativeWidth = currentFrame.width / currentScreen.visibleFrame.width
         let relativeHeight = currentFrame.height / currentScreen.visibleFrame.height
         
-        print("🔍 Display Move Debug:")
-        print("  Current screen: \(currentScreen.visibleFrame)")
-        print("  Current frame: \(currentFrame)")
-        print("  Relative position: x=\(relativeX), y=\(relativeY)")
-        print("  Relative size: w=\(relativeWidth), h=\(relativeHeight)")
-        print("  Next screen: \(nextScreen.visibleFrame)")
-        
         let newFrame = CGRect(
             x: nextScreen.visibleFrame.origin.x + (nextScreen.visibleFrame.width * relativeX),
             y: nextScreen.visibleFrame.origin.y + (nextScreen.visibleFrame.height * relativeY),
             width: nextScreen.visibleFrame.width * relativeWidth,
             height: nextScreen.visibleFrame.height * relativeHeight
         )
-        
-        print("  New frame: \(newFrame)")
-        print("  Expected width: \(nextScreen.visibleFrame.width) * \(relativeWidth) = \(nextScreen.visibleFrame.width * relativeWidth)")
         
         try accessibility.setWindowFrame(windowElement, frame: newFrame)
     }

@@ -162,6 +162,171 @@ class WindowSnapperServiceTests: XCTestCase {
             XCTAssertEqual(error as? WindowAccessibilityError, .cannotSetFrame)
         }
     }
+    
+    // MARK: - Dock Offset Detection Tests
+    
+    func testDockOffsetDetectionWhenWindowIsNearBottomAndFullWidth() throws {
+        // Simulate a window at the bottom of the screen with dock offset
+        // visibleFrame starts at y=0, but window is at y=38 (dock offset)
+        guard let screen = NSScreen.main else {
+            XCTFail("No main screen")
+            return
+        }
+        
+        // Simulate maximized window with dock offset
+        mockAccessibility.currentFrame = CGRect(
+            x: screen.visibleFrame.origin.x,
+            y: screen.visibleFrame.origin.y + 38,  // Dock offset
+            width: screen.visibleFrame.width,
+            height: screen.visibleFrame.height
+        )
+        
+        try service.execute(.topHalf)
+        
+        // After detecting dock offset, the frame should account for it
+        XCTAssertEqual(mockAccessibility.setFrameCalled, true)
+        
+        // Top half should start at y + dockOffset, not y=0
+        let expectedY = screen.visibleFrame.origin.y + 38  // Dock offset applied
+        XCTAssertNotNil(mockAccessibility.lastSetFrame)
+        XCTAssertEqual(mockAccessibility.lastSetFrame!.origin.y, expectedY, accuracy: 1.0)
+    }
+    
+    func testDockOffsetCachingAcrossMultipleActions() throws {
+        guard let screen = NSScreen.main else {
+            XCTFail("No main screen")
+            return
+        }
+        
+        // First action: maximized window with dock offset - should detect and cache
+        mockAccessibility.currentFrame = CGRect(
+            x: screen.visibleFrame.origin.x,
+            y: screen.visibleFrame.origin.y + 38,
+            width: screen.visibleFrame.width,
+            height: screen.visibleFrame.height
+        )
+        
+        try service.execute(.topHalf)
+        let firstFrameY = mockAccessibility.lastSetFrame?.origin.y ?? 0
+        
+        // Second action: window at top half (y=510, not near bottom)
+        // Should still use cached dock offset
+        mockAccessibility.currentFrame = mockAccessibility.lastSetFrame ?? .zero
+        
+        try service.execute(.bottomHalf)
+        
+        // Bottom half should also account for dock offset from cache
+        XCTAssertEqual(mockAccessibility.setFrameCalled, true)
+    }
+    
+    func testMaximizeUsesFullHeightWithDockOffset() throws {
+        guard let screen = NSScreen.main else {
+            XCTFail("No main screen")
+            return
+        }
+        
+        // Start with window at bottom (triggers dock offset detection)
+        mockAccessibility.currentFrame = CGRect(
+            x: screen.visibleFrame.origin.x,
+            y: screen.visibleFrame.origin.y + 38,
+            width: screen.visibleFrame.width,
+            height: screen.visibleFrame.height
+        )
+        
+        try service.execute(.maximize)
+        
+        // Maximize should use full visibleFrame height (944), not reduced height
+        XCTAssertNotNil(mockAccessibility.lastSetFrame)
+        XCTAssertEqual(mockAccessibility.lastSetFrame!.height, screen.visibleFrame.height, accuracy: 1.0)
+    }
+    
+    func testTopHalfHeightWithDockOffset() throws {
+        guard let screen = NSScreen.main else {
+            XCTFail("No main screen")
+            return
+        }
+        
+        // Start with maximized window (triggers dock detection)
+        mockAccessibility.currentFrame = CGRect(
+            x: screen.visibleFrame.origin.x,
+            y: screen.visibleFrame.origin.y + 38,
+            width: screen.visibleFrame.width,
+            height: screen.visibleFrame.height
+        )
+        
+        try service.execute(.topHalf)
+        
+        // Top half height should be half of visibleFrame height
+        let expectedHeight = screen.visibleFrame.height / 2
+        XCTAssertNotNil(mockAccessibility.lastSetFrame)
+        XCTAssertEqual(mockAccessibility.lastSetFrame!.height, expectedHeight, accuracy: 1.0)
+    }
+    
+    func testBottomHalfPositionWithDockOffset() throws {
+        guard let screen = NSScreen.main else {
+            XCTFail("No main screen")
+            return
+        }
+        
+        // Start with maximized window (triggers dock detection)
+        mockAccessibility.currentFrame = CGRect(
+            x: screen.visibleFrame.origin.x,
+            y: screen.visibleFrame.origin.y + 38,
+            width: screen.visibleFrame.width,
+            height: screen.visibleFrame.height
+        )
+        
+        try service.execute(.bottomHalf)
+        
+        // Bottom half should be at upper portion (y = dock offset + height/2)
+        let expectedY = screen.visibleFrame.origin.y + 38 + screen.visibleFrame.height / 2
+        XCTAssertNotNil(mockAccessibility.lastSetFrame)
+        XCTAssertEqual(mockAccessibility.lastSetFrame!.origin.y, expectedY, accuracy: 1.0)
+    }
+    
+    func testNoDockOffsetWhenWindowNotNearBottom() throws {
+        // When window is not near bottom and no cached offset, no adjustment should happen
+        guard let screen = NSScreen.main else {
+            XCTFail("No main screen")
+            return
+        }
+        
+        // Window in center of screen (not near bottom)
+        mockAccessibility.currentFrame = CGRect(x: 500, y: 400, width: 800, height: 600)
+        
+        // Create a fresh service (no cached dock offset)
+        let freshService = WindowSnapperService(accessibility: mockAccessibility)
+        
+        try freshService.execute(.leftHalf)
+        
+        // Should use visibleFrame as-is
+        XCTAssertEqual(mockAccessibility.lastSetFrame?.origin.y, screen.visibleFrame.origin.y)
+    }
+    
+    func testQuarterPositionsWithDockOffset() throws {
+        guard let screen = NSScreen.main else {
+            XCTFail("No main screen")
+            return
+        }
+        
+        // Start with maximized window (triggers dock detection)
+        let dockOffset: CGFloat = 38
+        mockAccessibility.currentFrame = CGRect(
+            x: screen.visibleFrame.origin.x,
+            y: screen.visibleFrame.origin.y + dockOffset,
+            width: screen.visibleFrame.width,
+            height: screen.visibleFrame.height
+        )
+        
+        // Test bottom-left quarter
+        try service.execute(.bottomLeftQuarter)
+        
+        // Bottom-left quarter should be at (x=0, y = dockOffset + height/2)
+        let expectedY = screen.visibleFrame.origin.y + dockOffset + screen.visibleFrame.height / 2
+        XCTAssertNotNil(mockAccessibility.lastSetFrame)
+        XCTAssertEqual(mockAccessibility.lastSetFrame!.origin.y, expectedY, accuracy: 1.0)
+        XCTAssertEqual(mockAccessibility.lastSetFrame!.width, screen.visibleFrame.width / 2, accuracy: 1.0)
+    }
 }
 
 // MARK: - Mock Accessibility Service

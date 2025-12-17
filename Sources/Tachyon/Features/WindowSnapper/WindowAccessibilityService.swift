@@ -109,8 +109,6 @@ public class WindowAccessibilityService: WindowAccessibilityServiceProtocol {
             throw WindowAccessibilityError.cannotSetFrame
         }
         
-        print("🔧 Setting frame: \(frame)")
-        
         // For cross-display moves, we need to:
         // 1. Set position first to move to new screen
         // 2. Then set size (which may be constrained by old screen)
@@ -123,8 +121,6 @@ public class WindowAccessibilityService: WindowAccessibilityServiceProtocol {
             positionValue
         )
         
-        print("🔧 Position set result: \(posResult == .success ? "SUCCESS" : "FAILED (\(posResult.rawValue))")")
-        
         // Set size
         let sizeResult = AXUIElementSetAttributeValue(
             element,
@@ -132,32 +128,23 @@ public class WindowAccessibilityService: WindowAccessibilityServiceProtocol {
             sizeValue
         )
         
-        print("🔧 Size set result: \(sizeResult == .success ? "SUCCESS" : "FAILED (\(sizeResult.rawValue))")")
-        
         guard posResult == .success && sizeResult == .success else {
             throw WindowAccessibilityError.cannotSetFrame
         }
         
         // Verify the frame was actually set
         let actualFrame = try getWindowFrame(element)
-        print("🔧 Actual frame after setting: \(actualFrame)")
         
         // If size didn't take effect (common with cross-display moves), set it again
         let sizeTolerance: CGFloat = 10.0
         if abs(actualFrame.width - frame.width) > sizeTolerance || 
            abs(actualFrame.height - frame.height) > sizeTolerance {
-            print("🔧 Size mismatch detected, setting size again...")
-            
-            let sizeResult2 = AXUIElementSetAttributeValue(
+            // Retry setting size now that window is on new screen
+            _ = AXUIElementSetAttributeValue(
                 element,
                 kAXSizeAttribute as CFString,
                 sizeValue
             )
-            
-            print("🔧 Second size set result: \(sizeResult2 == .success ? "SUCCESS" : "FAILED (\(sizeResult2.rawValue))")")
-            
-            let finalFrame = try getWindowFrame(element)
-            print("🔧 Final frame: \(finalFrame)")
         }
     }
     
