@@ -250,6 +250,11 @@ class SearchBarViewModel: ObservableObject {
         queryEngine.register(plugin: searchEngines)
         print("✅ SearchEnginePlugin registered")
         
+        print("🔌 Registering WindowSnapperPlugin...")
+        let windowSnapper = WindowSnapperPlugin()
+        queryEngine.register(plugin: windowSnapper)
+        print("✅ WindowSnapperPlugin registered")
+        
         // Setup debounced search
         queryEngine.onSearchComplete = { [weak self] results in
             self?.results = results

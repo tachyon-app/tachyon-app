@@ -5,12 +5,12 @@ A blazing-fast productivity launcher for macOS, built natively in Swift.
 ## Features
 
 - **App Launcher** - Launch applications with fuzzy search
-- **Custom Links** - URL templates with placeholders (Coming soon)
+- **Custom Links** - URL templates with placeholders
+- **Search Engines** - Custom search templates
+- **Window Snapping** - Rectangle-style window management ✅
 - **Script Runner** - Raycast-compatible script execution (Coming soon)
-- **Window Snapping** - Rectangle-style window management (Coming soon)
 - **Clipboard History** - Smart clipboard manager (Coming soon)
 - **Focus Mode** - Pomodoro timer with DND and Spotify (Coming soon)
-- **Search Engines** - Custom search templates (Coming soon)
 - **Global Hotkeys** - Customizable keyboard shortcuts
 
 ## Installation
@@ -54,6 +54,10 @@ To use Cmd+Space with Tachyon, you need to disable Spotlight's keyboard shortcut
 2. Go to **Keyboard** → **Keyboard Shortcuts** → **Spotlight**
 3. Uncheck "Show Spotlight search"
 
+### Accessibility Permissions
+
+Window snapping requires accessibility permissions. You'll be prompted to grant access when you first use a window snapping hotkey.
+
 ## Development
 
 ### Running Tests
@@ -68,8 +72,13 @@ Current test coverage:
 - ✅ FuzzyMatcher: 12 tests
 - ✅ QueryEngine: 7 tests  
 - ✅ AppLauncher: 4 tests
+- ✅ CustomLinks: 16 tests
+- ✅ SearchEngines: 4 tests
+- ✅ WindowGeometry: 25 tests
+- ✅ ScreenResolver: 8 tests
+- ✅ WindowSnapperService: 9 tests
 
-**Total: 23 tests passing**
+**Total: 81 tests passing**
 
 ### Architecture
 
@@ -117,12 +126,12 @@ See `Tests/TachyonTests/` for examples.
 - [x] Query engine with fuzzy matching
 - [x] App launcher plugin
 
-### Phase 2: Core Features (In Progress)
-- [ ] Custom links
-- [ ] Search engines
-- [ ] Settings UI enhancements
+### Phase 2: Core Features ✅
+- [x] Custom links
+- [x] Search engines
+- [x] Settings UI enhancements
 
-### Phase 3: Advanced Features
+### Phase 3: Advanced Features (In Progress)
 - [ ] Window snapping (Rectangle-compatible)
 - [ ] Clipboard history
 - [ ] Script runner (Raycast-compatible)

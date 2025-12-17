@@ -14,6 +14,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private var settingsWindow: NSWindow?
     private var hotkeyRef: EventHotKeyRef?
     
+    // Window snapping
+    private var windowSnapperService: WindowSnapperService?
+    private var windowSnapperHotkeyIDs: [UUID] = []
+    
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Hide dock icon - we're a menu bar app
         NSApp.setActivationPolicy(.accessory)
@@ -23,6 +27,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         
         // Register global hotkey (Cmd+Space)
         registerGlobalHotkey()
+        
+        // Initialize window snapping
+        setupWindowSnapping()
         
         // Create search bar window (hidden initially)
         searchBarWindow = SearchBarWindow()
@@ -36,6 +43,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     func applicationWillTerminate(_ notification: Notification) {
         // Cleanup
         unregisterGlobalHotkey()
+        unregisterWindowSnappingHotkeys()
     }
     
     // MARK: - Menu Bar
@@ -167,6 +175,56 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     // triggers `cancelOperation(_:)` which can lead to `windowWillClose`.
     // By simply setting the delegate, we allow the default system behavior
     // for Escape to close the window, and then `windowWillClose` handles cleanup.
+    
+    // MARK: - Window Snapping
+    
+    private func setupWindowSnapping() {
+        // Check accessibility permissions
+        let hasPermission = WindowAccessibilityService.checkAccessibilityPermissions()
+        
+        if !hasPermission {
+            print("⚠️ Accessibility permissions not granted. Window snapping will not work until permissions are granted.")
+        }
+        
+        // Initialize service
+        windowSnapperService = WindowSnapperService()
+        
+        // Register all default hotkeys
+        registerWindowSnappingHotkeys()
+        
+        print("✅ Window snapping initialized")
+    }
+    
+    private func registerWindowSnappingHotkeys() {
+        guard let service = windowSnapperService else { return }
+        
+        // Register each default hotkey
+        for config in WindowSnapperHotkeys.defaults {
+            let id = HotkeyManager.shared.register(
+                keyCode: config.keyCode,
+                modifiers: config.modifiers,
+                handler: { [weak service] in
+                    do {
+                        try service?.execute(config.action)
+                    } catch {
+                        print("❌ Failed to execute \(config.action): \(error)")
+                    }
+                }
+            )
+            windowSnapperHotkeyIDs.append(id)
+        }
+        
+        print("✅ Registered \(windowSnapperHotkeyIDs.count) window snapping hotkeys")
+    }
+    
+    private func unregisterWindowSnappingHotkeys() {
+        for id in windowSnapperHotkeyIDs {
+            HotkeyManager.shared.unregister(id)
+        }
+        windowSnapperHotkeyIDs.removeAll()
+        
+        print("✅ Unregistered window snapping hotkeys")
+    }
 }
 
 // MARK: - Settings Window
