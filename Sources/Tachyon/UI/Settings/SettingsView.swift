@@ -8,6 +8,7 @@ public struct SettingsView: View {
 enum SettingsTab: String, CaseIterable, Identifiable {
     case general = "General"
     case sources = "Sources"
+    case windowSnapping = "Window Snapping"
     case hotkeys = "Hotkeys"
     
     var id: String { rawValue }
@@ -16,6 +17,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         switch self {
         case .general: return "gearshape"
         case .sources: return "square.grid.2x2"
+        case .windowSnapping: return "rectangle.split.3x3"
         case .hotkeys: return "keyboard"
         }
     }
@@ -68,6 +70,8 @@ enum SettingsTab: String, CaseIterable, Identifiable {
                         GeneralSettingsView()
                     case .sources:
                         SourcesSettingsView()
+                    case .windowSnapping:
+                        WindowSnappingSettingsView()
                     case .hotkeys:
                         HotkeysSettingsView()
                     }

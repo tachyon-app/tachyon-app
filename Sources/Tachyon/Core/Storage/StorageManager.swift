@@ -66,6 +66,20 @@ public class StorageManager {
             }
         }
         
+        migrator.registerMigration("v3") { db in
+            // Create window snapping shortcuts table
+            try WindowSnappingShortcut.createTable(in: db)
+            
+            // Auto-seed defaults if table is empty
+            let count = try WindowSnappingShortcut.fetchCount(db)
+            if count == 0 {
+                let defaults = WindowSnappingShortcut.defaults
+                for var shortcut in defaults {
+                    try shortcut.insert(db)
+                }
+            }
+        }
+        
         return migrator
     }
     

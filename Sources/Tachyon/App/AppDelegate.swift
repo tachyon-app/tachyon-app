@@ -31,6 +31,29 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         // Initialize window snapping
         setupWindowSnapping()
         
+        // Listen for shortcut changes
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(reloadWindowSnappingHotkeys),
+            name: .windowSnappingShortcutsDidChange,
+            object: nil
+        )
+        
+        // Listen for recording start/end to temporarily disable hotkeys
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(temporarilyDisableWindowSnappingHotkeys),
+            name: .windowSnappingRecordingStarted,
+            object: nil
+        )
+        
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(reloadWindowSnappingHotkeys),
+            name: .windowSnappingRecordingEnded,
+            object: nil
+        )
+        
         // Create search bar window (hidden initially)
         searchBarWindow = SearchBarWindow()
         
@@ -197,8 +220,49 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     
     private func registerWindowSnappingHotkeys() {
         guard let service = windowSnapperService else { return }
+        guard let dbQueue = StorageManager.shared.dbQueue else {
+            print("❌ Database not available for window snapping shortcuts")
+            return
+        }
         
-        // Register each default hotkey
+        // Create repository
+        let repository = WindowSnappingShortcutRepository(dbQueue: dbQueue)
+        
+        // Load enabled shortcuts from database
+        do {
+            let shortcuts = try repository.fetchEnabled()
+            
+            // Register each enabled shortcut
+            for shortcut in shortcuts {
+                guard let action = shortcut.windowAction else {
+                    print("⚠️ Unknown action: \(shortcut.action)")
+                    continue
+                }
+                
+                let id = HotkeyManager.shared.register(
+                    keyCode: shortcut.keyCode,
+                    modifiers: shortcut.modifiers,
+                    handler: { [weak service] in
+                        do {
+                            try service?.execute(action)
+                        } catch {
+                            print("❌ Failed to execute \(action): \(error)")
+                        }
+                    }
+                )
+                windowSnapperHotkeyIDs.append(id)
+            }
+            
+            print("✅ Registered \(windowSnapperHotkeyIDs.count) window snapping hotkeys")
+        } catch {
+            print("❌ Failed to load window snapping shortcuts: \(error)")
+            // Fallback to defaults if database fails
+            registerDefaultHotkeys(service: service)
+        }
+    }
+    
+    /// Fallback method to register hardcoded defaults if database fails
+    private func registerDefaultHotkeys(service: WindowSnapperService) {
         for config in WindowSnapperHotkeys.defaults {
             let id = HotkeyManager.shared.register(
                 keyCode: config.keyCode,
@@ -213,8 +277,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             )
             windowSnapperHotkeyIDs.append(id)
         }
-        
-        print("✅ Registered \(windowSnapperHotkeyIDs.count) window snapping hotkeys")
+        print("✅ Registered \(windowSnapperHotkeyIDs.count) window snapping hotkeys (defaults)")
     }
     
     private func unregisterWindowSnappingHotkeys() {
@@ -224,6 +287,20 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         windowSnapperHotkeyIDs.removeAll()
         
         print("✅ Unregistered window snapping hotkeys")
+    }
+    
+    
+    /// Reload window snapping hotkeys (call this when shortcuts are changed in settings)
+    @objc private func reloadWindowSnappingHotkeys() {
+        unregisterWindowSnappingHotkeys()
+        registerWindowSnappingHotkeys()
+        print("🔄 Reloaded window snapping hotkeys")
+    }
+    
+    /// Temporarily disable window snapping hotkeys (during shortcut recording)
+    @objc private func temporarilyDisableWindowSnappingHotkeys() {
+        unregisterWindowSnappingHotkeys()
+        print("⏸️ Temporarily disabled window snapping hotkeys for recording")
     }
 }
 
