@@ -80,6 +80,23 @@ public class StorageManager {
             }
         }
         
+        migrator.registerMigration("v4") { db in
+            // Create script commands table
+            try db.create(table: "script_commands") { t in
+                t.column("id", .text).primaryKey()
+                t.column("fileName", .text).notNull().unique()
+                t.column("title", .text).notNull()
+                t.column("packageName", .text)
+                t.column("mode", .text).notNull().defaults(to: "fullOutput")
+                t.column("icon", .blob)
+                t.column("hotkey", .text)
+                t.column("refreshTime", .text)
+                t.column("isEnabled", .boolean).notNull().defaults(to: true)
+                t.column("lastExecuted", .datetime)
+                t.column("createdAt", .datetime).notNull()
+            }
+        }
+        
         return migrator
     }
     
@@ -148,6 +165,26 @@ public class StorageManager {
     public func deleteCustomLink(id: UUID) throws {
         _ = try dbQueue?.write { db in
             try CustomLinkRecord.deleteOne(db, key: id)
+        }
+    }
+    
+    // MARK: - Script Commands
+    
+    public func getAllScripts() throws -> [ScriptRecord] {
+        return try dbQueue?.read { db in
+            try ScriptRecord.fetchAll(db)
+        } ?? []
+    }
+    
+    public func saveScript(_ script: ScriptRecord) throws {
+        try dbQueue?.write { db in
+            try script.save(db)
+        }
+    }
+    
+    public func deleteScript(id: UUID) throws {
+        _ = try dbQueue?.write { db in
+            try ScriptRecord.deleteOne(db, key: id)
         }
     }
 }

@@ -6,19 +6,25 @@ struct SearchBarView: View {
     @FocusState private var isSearchFocused: Bool
     
     var body: some View {
-        if let link = viewModel.showingLinkForm {
-            // Show link input form
-            LinkInputFormView(
-                link: link,
-                onExecute: { url in
-                    NSWorkspace.shared.open(url)
-                    viewModel.showingLinkForm = nil
-                    viewModel.onHideWindow?()
+        if let (script, metadata) = viewModel.showingScriptOutput {
+            // Show script output view
+            ScriptOutputView(script: script, metadata: metadata) {
+                viewModel.showingScriptOutput = nil
+            }
+        } else if let (script, metadata) = viewModel.showingScriptArgumentForm {
+            // Show script argument input form
+            ScriptArgumentInputView(
+                script: script,
+                metadata: metadata,
+                onExecute: { arguments in
+                    viewModel.showingScriptArgumentForm = nil
+                    viewModel.executeScript(script: script, metadata: metadata, arguments: arguments)
                 },
                 onCancel: {
-                    viewModel.showingLinkForm = nil
+                    viewModel.showingScriptArgumentForm = nil
                 }
             )
+        } else if let link = viewModel.showingLinkForm {
         } else {
             // Show normal search interface with premium dark design
             VStack(spacing: 0) {
@@ -117,7 +123,12 @@ struct SearchBarView: View {
                         alignment: .top
                     )
                 }
-            }
+                
+                // Persistent status bar at bottom (Raycast-style)
+                StatusBarComponent(
+                    state: viewModel.statusBarState,
+                    showActionButtons: !viewModel.results.isEmpty
+                )            }
             .frame(width: 680)
             .background(
                 // Dark gradient background with proper corner radius
@@ -213,7 +224,29 @@ class SearchBarViewModel: ObservableObject {
     @Published var results: [QueryResult] = []
     @Published var selectedIndex: Int = 0
     @Published var showingLinkForm: CustomLinkRecord? = nil
+    @Published var showingScriptOutput: (ScriptRecord, ScriptMetadata)? = nil
+    @Published var showingScriptArgumentForm: (ScriptRecord, ScriptMetadata)? = nil
+    @Published private var scriptMessage: String? = nil
+    @Published private var scriptMessageType: ScriptMessageType = .success
     
+    enum ScriptMessageType {
+        case running, success, error
+    }
+    
+    var statusBarState: StatusBarComponent.State {
+        if let message = scriptMessage {
+            switch scriptMessageType {
+            case .running:
+                return .scriptRunning(message)
+            case .success:
+                return .scriptSuccess(message)
+            case .error:
+                return .scriptError(message)
+            }
+        } else {
+            return .hint("Type to search apps and commands...")
+        }
+    }    
     private let queryEngine = QueryEngine()
     
     /// Callback to hide the window
@@ -255,6 +288,69 @@ class SearchBarViewModel: ObservableObject {
         queryEngine.register(plugin: windowSnapper)
         print("✅ WindowSnapperPlugin registered")
         
+        print("🔌 Registering ScriptRunnerPlugin...")
+        let scriptRunner = ScriptRunnerPlugin()
+        queryEngine.register(plugin: scriptRunner)
+        print("✅ ScriptRunnerPlugin registered")        
+        
+        // Listen for status bar updates
+        NotificationCenter.default.addObserver(
+            forName: NSNotification.Name("UpdateStatusBar"),
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            if let (indicatorEmoji, message) = notification.object as? (String, String) {
+                self?.updateStatusBar(indicatorEmoji: indicatorEmoji, message: message)
+            }
+        }
+        
+        // Listen for script output view requests
+        NotificationCenter.default.addObserver(
+            forName: NSNotification.Name("ShowScriptOutputView"),
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            if let (script, metadata) = notification.object as? (ScriptRecord, ScriptMetadata) {
+                self?.showingScriptOutput = (script, metadata)
+            }
+        }
+        
+        // Listen for script argument form requests
+        NotificationCenter.default.addObserver(
+            forName: NSNotification.Name("ShowScriptArgumentForm"),
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            if let (script, metadata) = notification.object as? (ScriptRecord, ScriptMetadata) {
+                self?.showingScriptArgumentForm = (script, metadata)
+            }
+        }
+        
+        // Listen for search results refresh requests (e.g., when inline script updates)
+        NotificationCenter.default.addObserver(
+            forName: NSNotification.Name("RefreshSearchResults"),
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in
+                guard let self = self else { return }
+                let currentQuery = self.query
+                if !currentQuery.isEmpty {
+                    self.performSearch(query: currentQuery)
+                }
+            }
+        }
+        
+        // Listen for clear search query requests (e.g., after compact/inline/silent script execution)
+        NotificationCenter.default.addObserver(
+            forName: NSNotification.Name("ClearSearchQuery"),
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in
+                self?.query = ""
+            }
+        }
         // Setup debounced search
         queryEngine.onSearchComplete = { [weak self] results in
             self?.results = results
@@ -314,6 +410,64 @@ class SearchBarViewModel: ObservableObject {
         // Hide window after execution only if requested
         if result.hideWindowAfterExecution {
             onHideWindow?()
+        }
+    }
+    
+    /// Update status bar with indicator and message
+    private func updateStatusBar(indicatorEmoji: String, message: String) {
+        // Map emoji to message type
+        switch indicatorEmoji {
+        case "✅":
+            scriptMessageType = .success
+        case "⏳", "⏰":
+            scriptMessageType = .running
+        case "❌":
+            scriptMessageType = .error
+        default:
+            scriptMessageType = .success
+        }
+        
+        scriptMessage = message
+        
+        // Auto-clear after 5 seconds for success/error messages
+        if indicatorEmoji == "✅" || indicatorEmoji == "❌" {
+            Task {
+                try? await Task.sleep(nanoseconds: 5_000_000_000) // 5 seconds
+                await MainActor.run {
+                    if self.scriptMessage == message {
+                        self.scriptMessage = nil
+                    }
+                }
+            }
+        }
+    }
+    
+    /// Execute a script with arguments
+    func executeScript(script: ScriptRecord, metadata: ScriptMetadata, arguments: [Int: String]) {
+        Task {
+            let fileURL = ScriptFileManager.shared.scriptURL(for: script.fileName)
+            let executor = ScriptExecutor()
+            
+            do {
+                let result = try await executor.execute(
+                    fileURL: fileURL,
+                    metadata: metadata,
+                    arguments: arguments
+                )
+                
+                await MainActor.run {
+                    if result.isSuccess {
+                        showingScriptOutput = (script, metadata)
+                    } else {
+                        // Show error
+                        updateStatusBar(indicatorEmoji: "❌", message: "Script failed")
+                    }
+                }
+            } catch {
+                await MainActor.run {
+                    updateStatusBar(indicatorEmoji: "❌", message: "Error: \(error.localizedDescription)")
+                }
+            }
         }
     }
 }
