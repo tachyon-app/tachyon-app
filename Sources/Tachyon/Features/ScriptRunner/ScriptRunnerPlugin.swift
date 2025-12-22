@@ -124,12 +124,20 @@ public class ScriptRunnerPlugin: Plugin {
                 let metadata = metadataCache[script.id]
                 let subtitle = buildSubtitle(for: script, metadata: metadata)
                 
+                // Only use iconData if it's valid image data
+                let validIconData: Data? = {
+                    if let data = script.icon, NSImage(data: data) != nil {
+                        return data
+                    }
+                    return nil
+                }()
+                
                 return QueryResult(
                     id: script.id,
                     title: script.title,
                     subtitle: subtitle,
-                    icon: metadata?.icon ?? "⚡️",
-                    iconData: script.icon,
+                    icon: metadata?.icon ?? "terminal.fill",
+                    iconData: validIconData,
                     alwaysShow: false,
                     hideWindowAfterExecution: false,
                     action: { [weak self] in

@@ -84,10 +84,19 @@ struct ResultRowView: View {
                         .frame(width: 32, height: 32)
                 }
             } else if let icon = result.icon {
-                Image(systemName: icon)
-                    .font(.system(size: 20))
-                    .foregroundColor(Color.white.opacity(0.6))
-                    .frame(width: 32, height: 32)
+                // Check if it's an emoji (single character, not a valid SF Symbol)
+                if icon.count == 1 && icon.unicodeScalars.first?.properties.isEmoji == true {
+                    // Render emoji as text
+                    Text(icon)
+                        .font(.system(size: 24))
+                        .frame(width: 32, height: 32)
+                } else {
+                    // Render as SF Symbol
+                    Image(systemName: icon)
+                        .font(.system(size: 20))
+                        .foregroundColor(Color.white.opacity(0.6))
+                        .frame(width: 32, height: 32)
+                }
             } else {
                 Image(systemName: "app.fill")
                     .font(.system(size: 20))

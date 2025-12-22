@@ -134,7 +134,7 @@ See `Tests/TachyonTests/` for examples.
 ### Phase 3: Advanced Features (In Progress)
 - [x] Window snapping (Rectangle-compatible)
 - [ ] Clipboard history
-- [ ] Script runner (Raycast-compatible)
+- [x] Script runner (Raycast-compatible)
 - [ ] Focus mode
 
 ### Phase 4: Polish
