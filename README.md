@@ -132,7 +132,7 @@ See `Tests/TachyonTests/` for examples.
 - [x] Settings UI enhancements
 
 ### Phase 3: Advanced Features (In Progress)
-- [ ] Window snapping (Rectangle-compatible)
+- [x] Window snapping (Rectangle-compatible)
 - [ ] Clipboard history
 - [ ] Script runner (Raycast-compatible)
 - [ ] Focus mode

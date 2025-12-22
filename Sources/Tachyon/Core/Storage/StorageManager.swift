@@ -97,6 +97,17 @@ public class StorageManager {
             }
         }
         
+        migrator.registerMigration("v5") { db in
+            // Reset window snapping shortcuts to new cycle-through actions
+            // Delete all old shortcuts and insert new defaults
+            try db.execute(sql: "DELETE FROM window_snapping_shortcuts")
+            
+            let defaults = WindowSnappingShortcut.defaults
+            for var shortcut in defaults {
+                try shortcut.insert(db)
+            }
+        }
+        
         return migrator
     }
     

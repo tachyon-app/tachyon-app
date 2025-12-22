@@ -318,14 +318,14 @@ class WindowSnapperServiceTests: XCTestCase {
             height: screen.visibleFrame.height
         )
         
-        // Test bottom-left quarter
-        try service.execute(.bottomLeftQuarter)
+        // Test cycleQuarters - starts at first quarter (1/4 width, full height)
+        try service.execute(.cycleQuarters)
         
-        // Bottom-left quarter should be at (x=0, y = dockOffset + height/2)
-        let expectedY = screen.visibleFrame.origin.y + dockOffset + screen.visibleFrame.height / 2
+        // First quarter should be at (x=0, y = dockOffset), 1/4 width, full height
+        let expectedY = screen.visibleFrame.origin.y + dockOffset
         XCTAssertNotNil(mockAccessibility.lastSetFrame)
         XCTAssertEqual(mockAccessibility.lastSetFrame!.origin.y, expectedY, accuracy: 1.0)
-        XCTAssertEqual(mockAccessibility.lastSetFrame!.width, screen.visibleFrame.width / 2, accuracy: 1.0)
+        XCTAssertEqual(mockAccessibility.lastSetFrame!.width, screen.visibleFrame.width / 4, accuracy: 1.0)
     }
 }
 

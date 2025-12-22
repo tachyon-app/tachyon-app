@@ -55,7 +55,7 @@ class WindowSnappingShortcutsTests: XCTestCase {
         
         // Verify count
         let shortcuts = try repository.fetchAll()
-        XCTAssertEqual(shortcuts.count, 19, "Should have 19 default shortcuts")
+        XCTAssertEqual(shortcuts.count, 12, "Should have 12 default shortcuts")
         
         // Verify first shortcut
         let leftHalf = shortcuts.first { $0.action == "leftHalf" }
@@ -75,7 +75,7 @@ class WindowSnappingShortcutsTests: XCTestCase {
         let shortcuts = try repository.fetchAll()
         
         // Verify count
-        XCTAssertEqual(shortcuts.count, 19)
+        XCTAssertEqual(shortcuts.count, 12)
         
         // Verify all have IDs assigned
         for shortcut in shortcuts {
@@ -143,7 +143,7 @@ class WindowSnappingShortcutsTests: XCTestCase {
         
         // Verify all shortcuts match defaults
         let shortcuts = try repository.fetchAll()
-        XCTAssertEqual(shortcuts.count, 19)
+        XCTAssertEqual(shortcuts.count, 12)
         
         let leftHalfReset = try repository.fetch(byAction: .leftHalf)
         XCTAssertEqual(leftHalfReset?.keyCode, 123) // Back to default
@@ -168,9 +168,9 @@ class WindowSnappingShortcutsTests: XCTestCase {
             try repository.insertDefaults()
         }
         
-        // Verify 19 defaults inserted
+        // Verify 12 defaults inserted
         let shortcuts = try repository.fetchAll()
-        XCTAssertEqual(shortcuts.count, 19)
+        XCTAssertEqual(shortcuts.count, 12)
     }
     
     // MARK: - Additional Tests
@@ -190,7 +190,7 @@ class WindowSnappingShortcutsTests: XCTestCase {
         
         // Fetch enabled only
         let enabled = try repository.fetchEnabled()
-        XCTAssertEqual(enabled.count, 17) // 19 - 2 = 17
+        XCTAssertEqual(enabled.count, 10) // 12 - 2 = 10
     }
     
     func testFetchByAction() throws {

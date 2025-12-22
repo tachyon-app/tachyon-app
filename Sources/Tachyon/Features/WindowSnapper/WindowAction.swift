@@ -8,20 +8,17 @@ public enum WindowAction: String, CaseIterable, Codable {
     case topHalf
     case bottomHalf
     
-    // Quarters
-    case topLeftQuarter
-    case topRightQuarter
-    case bottomLeftQuarter
-    case bottomRightQuarter
-    case firstThreeQuarters
-    case lastThreeQuarters
+    // Quarters (cycle through all 4)
+    case cycleQuarters
     
-    // Thirds
-    case firstThird
-    case centerThird
-    case lastThird
-    case firstTwoThirds
-    case lastTwoThirds
+    // Three-Quarters (cycle between first and last)
+    case cycleThreeQuarters
+    
+    // Thirds (cycle through all 3)
+    case cycleThirds
+    
+    // Two-Thirds (cycle between first and last)
+    case cycleTwoThirds
     
     // Maximize & Center
     case maximize
@@ -39,17 +36,10 @@ public enum WindowAction: String, CaseIterable, Codable {
         case .rightHalf: return "Right Half"
         case .topHalf: return "Top Half"
         case .bottomHalf: return "Bottom Half"
-        case .topLeftQuarter: return "Top Left Quarter"
-        case .topRightQuarter: return "Top Right Quarter"
-        case .bottomLeftQuarter: return "Bottom Left Quarter"
-        case .bottomRightQuarter: return "Bottom Right Quarter"
-        case .firstThreeQuarters: return "First Three Quarters"
-        case .lastThreeQuarters: return "Last Three Quarters"
-        case .firstThird: return "First Third"
-        case .centerThird: return "Center Third"
-        case .lastThird: return "Last Third"
-        case .firstTwoThirds: return "First Two Thirds"
-        case .lastTwoThirds: return "Last Two Thirds"
+        case .cycleQuarters: return "Cycle Quarters"
+        case .cycleThreeQuarters: return "Cycle Three Quarters"
+        case .cycleThirds: return "Cycle Thirds"
+        case .cycleTwoThirds: return "Cycle Two Thirds"
         case .maximize: return "Maximize"
         case .fullscreen: return "Fullscreen"
         case .center: return "Center"

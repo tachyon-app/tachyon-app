@@ -47,75 +47,33 @@ public struct WindowSnapperHotkeys {
             displayName: "⌃⌥↓"
         ),
         
-        // Quarters
+        // Cycle Quarters
         HotkeyConfig(
-            action: .topLeftQuarter,
-            keyCode: UInt32(kVK_ANSI_U),
+            action: .cycleQuarters,
+            keyCode: UInt32(kVK_ANSI_4),
             modifiers: UInt32(controlKey | optionKey),
-            displayName: "⌃⌥U"
-        ),
-        HotkeyConfig(
-            action: .topRightQuarter,
-            keyCode: UInt32(kVK_ANSI_I),
-            modifiers: UInt32(controlKey | optionKey),
-            displayName: "⌃⌥I"
-        ),
-        HotkeyConfig(
-            action: .bottomLeftQuarter,
-            keyCode: UInt32(kVK_ANSI_J),
-            modifiers: UInt32(controlKey | optionKey),
-            displayName: "⌃⌥J"
-        ),
-        HotkeyConfig(
-            action: .bottomRightQuarter,
-            keyCode: UInt32(kVK_ANSI_K),
-            modifiers: UInt32(controlKey | optionKey),
-            displayName: "⌃⌥K"
+            displayName: "⌃⌥4"
         ),
         
-        // Three Quarters
+        // Cycle Three-Quarters
         HotkeyConfig(
-            action: .firstThreeQuarters,
-            keyCode: UInt32(kVK_LeftArrow),
-            modifiers: UInt32(controlKey | optionKey | shiftKey),
-            displayName: "⌃⌥⇧←"
-        ),
-        HotkeyConfig(
-            action: .lastThreeQuarters,
-            keyCode: UInt32(kVK_RightArrow),
-            modifiers: UInt32(controlKey | optionKey | shiftKey),
-            displayName: "⌃⌥⇧→"
+            action: .cycleThreeQuarters,
+            keyCode: UInt32(kVK_ANSI_Q),
+            modifiers: UInt32(controlKey | optionKey),
+            displayName: "⌃⌥Q"
         ),
         
-        // Thirds
+        // Cycle Thirds
         HotkeyConfig(
-            action: .firstThird,
-            keyCode: UInt32(kVK_ANSI_D),
+            action: .cycleThirds,
+            keyCode: UInt32(kVK_ANSI_3),
             modifiers: UInt32(controlKey | optionKey),
-            displayName: "⌃⌥D"
-        ),
-        HotkeyConfig(
-            action: .centerThird,
-            keyCode: UInt32(kVK_ANSI_F),
-            modifiers: UInt32(controlKey | optionKey),
-            displayName: "⌃⌥F"
-        ),
-        HotkeyConfig(
-            action: .lastThird,
-            keyCode: UInt32(kVK_ANSI_G),
-            modifiers: UInt32(controlKey | optionKey),
-            displayName: "⌃⌥G"
+            displayName: "⌃⌥3"
         ),
         
-        // Two Thirds
+        // Cycle Two-Thirds
         HotkeyConfig(
-            action: .firstTwoThirds,
-            keyCode: UInt32(kVK_ANSI_E),
-            modifiers: UInt32(controlKey | optionKey),
-            displayName: "⌃⌥E"
-        ),
-        HotkeyConfig(
-            action: .lastTwoThirds,
+            action: .cycleTwoThirds,
             keyCode: UInt32(kVK_ANSI_T),
             modifiers: UInt32(controlKey | optionKey),
             displayName: "⌃⌥T"

@@ -36,8 +36,6 @@ class WindowGeometryTests: XCTestCase {
     }
     
     func testTopHalf() {
-        // NOTE: "topHalf" action moves window to BOTTOM of screen visually
-        // (lower Y in macOS coordinate system where y=0 is at bottom)
         let result = WindowGeometry.targetFrame(
             for: .topHalf,
             currentFrame: CGRect(x: 100, y: 100, width: 800, height: 600),
@@ -45,14 +43,12 @@ class WindowGeometryTests: XCTestCase {
         )
         
         XCTAssertEqual(result.origin.x, 0)
-        XCTAssertEqual(result.origin.y, 0) // Bottom of screen (lower Y)
+        XCTAssertEqual(result.origin.y, 0)
         XCTAssertEqual(result.width, 1920)
-        XCTAssertEqual(result.height, 527.5) // Half height
+        XCTAssertEqual(result.height, 527.5)
     }
     
     func testBottomHalf() {
-        // NOTE: "bottomHalf" action moves window to TOP of screen visually
-        // (higher Y in macOS coordinate system)
         let result = WindowGeometry.targetFrame(
             for: .bottomHalf,
             currentFrame: CGRect(x: 100, y: 100, width: 800, height: 600),
@@ -60,160 +56,133 @@ class WindowGeometryTests: XCTestCase {
         )
         
         XCTAssertEqual(result.origin.x, 0)
-        XCTAssertEqual(result.origin.y, 527.5) // Top of screen (higher Y = half of 1055)
+        XCTAssertEqual(result.origin.y, 527.5)
         XCTAssertEqual(result.width, 1920)
         XCTAssertEqual(result.height, 527.5)
     }
     
-    // MARK: - Quarters Tests
+    // MARK: - Third Position Helper Tests
     
-    func testTopLeftQuarter() {
-        // NOTE: "topLeftQuarter" moves to BOTTOM-LEFT visually (lower Y, left X)
-        let result = WindowGeometry.targetFrame(
-            for: .topLeftQuarter,
-            currentFrame: CGRect(x: 100, y: 100, width: 800, height: 600),
-            visibleFrame: visibleFrame
-        )
-        
+    func testThirdFramePosition1() {
+        let result = WindowGeometry.thirdFrame(position: 1, visibleFrame: visibleFrame)
         XCTAssertEqual(result.origin.x, 0)
-        XCTAssertEqual(result.origin.y, 0) // Bottom (lower Y)
-        XCTAssertEqual(result.width, 960)
-        XCTAssertEqual(result.height, 527.5)
-    }
-    
-    func testTopRightQuarter() {
-        // NOTE: "topRightQuarter" moves to BOTTOM-RIGHT visually (lower Y, right X)
-        let result = WindowGeometry.targetFrame(
-            for: .topRightQuarter,
-            currentFrame: CGRect(x: 100, y: 100, width: 800, height: 600),
-            visibleFrame: visibleFrame
-        )
-        
-        XCTAssertEqual(result.origin.x, 960)
-        XCTAssertEqual(result.origin.y, 0) // Bottom (lower Y)
-        XCTAssertEqual(result.width, 960)
-        XCTAssertEqual(result.height, 527.5)
-    }
-    
-    func testBottomLeftQuarter() {
-        // NOTE: "bottomLeftQuarter" moves to TOP-LEFT visually (higher Y, left X)
-        let result = WindowGeometry.targetFrame(
-            for: .bottomLeftQuarter,
-            currentFrame: CGRect(x: 100, y: 100, width: 800, height: 600),
-            visibleFrame: visibleFrame
-        )
-        
-        XCTAssertEqual(result.origin.x, 0)
-        XCTAssertEqual(result.origin.y, 527.5) // Top (higher Y)
-        XCTAssertEqual(result.width, 960)
-        XCTAssertEqual(result.height, 527.5)
-    }
-    
-    func testBottomRightQuarter() {
-        // NOTE: "bottomRightQuarter" moves to TOP-RIGHT visually (higher Y, right X)
-        let result = WindowGeometry.targetFrame(
-            for: .bottomRightQuarter,
-            currentFrame: CGRect(x: 100, y: 100, width: 800, height: 600),
-            visibleFrame: visibleFrame
-        )
-        
-        XCTAssertEqual(result.origin.x, 960)
-        XCTAssertEqual(result.origin.y, 527.5) // Top (higher Y)
-        XCTAssertEqual(result.width, 960)
-        XCTAssertEqual(result.height, 527.5)
-    }
-    
-    func testFirstThreeQuarters() {
-        let result = WindowGeometry.targetFrame(
-            for: .firstThreeQuarters,
-            currentFrame: CGRect(x: 100, y: 100, width: 800, height: 600),
-            visibleFrame: visibleFrame
-        )
-        
-        XCTAssertEqual(result.origin.x, 0)
-        XCTAssertEqual(result.origin.y, 0)
-        XCTAssertEqual(result.width, 1440) // 3/4 of 1920
-        XCTAssertEqual(result.height, 1055)
-    }
-    
-    func testLastThreeQuarters() {
-        let result = WindowGeometry.targetFrame(
-            for: .lastThreeQuarters,
-            currentFrame: CGRect(x: 100, y: 100, width: 800, height: 600),
-            visibleFrame: visibleFrame
-        )
-        
-        XCTAssertEqual(result.origin.x, 480) // 1/4 of 1920
-        XCTAssertEqual(result.origin.y, 0)
-        XCTAssertEqual(result.width, 1440)
-        XCTAssertEqual(result.height, 1055)
-    }
-    
-    // MARK: - Thirds Tests
-    
-    func testFirstThird() {
-        let result = WindowGeometry.targetFrame(
-            for: .firstThird,
-            currentFrame: CGRect(x: 100, y: 100, width: 800, height: 600),
-            visibleFrame: visibleFrame
-        )
-        
-        XCTAssertEqual(result.origin.x, 0)
-        XCTAssertEqual(result.origin.y, 0)
         XCTAssertEqual(result.width, 640) // 1/3 of 1920
-        XCTAssertEqual(result.height, 1055)
     }
     
-    func testCenterThird() {
-        let result = WindowGeometry.targetFrame(
-            for: .centerThird,
-            currentFrame: CGRect(x: 100, y: 100, width: 800, height: 600),
-            visibleFrame: visibleFrame
-        )
-        
-        XCTAssertEqual(result.origin.x, 640)
-        XCTAssertEqual(result.origin.y, 0)
+    func testThirdFramePosition2() {
+        let result = WindowGeometry.thirdFrame(position: 2, visibleFrame: visibleFrame)
+        XCTAssertEqual(result.origin.x, 640) // 1/3 of 1920
         XCTAssertEqual(result.width, 640)
-        XCTAssertEqual(result.height, 1055)
     }
     
-    func testLastThird() {
-        let result = WindowGeometry.targetFrame(
-            for: .lastThird,
-            currentFrame: CGRect(x: 100, y: 100, width: 800, height: 600),
-            visibleFrame: visibleFrame
-        )
-        
+    func testThirdFramePosition3() {
+        let result = WindowGeometry.thirdFrame(position: 3, visibleFrame: visibleFrame)
         XCTAssertEqual(result.origin.x, 1280) // 2/3 of 1920
-        XCTAssertEqual(result.origin.y, 0)
         XCTAssertEqual(result.width, 640)
-        XCTAssertEqual(result.height, 1055)
     }
     
-    func testFirstTwoThirds() {
-        let result = WindowGeometry.targetFrame(
-            for: .firstTwoThirds,
-            currentFrame: CGRect(x: 100, y: 100, width: 800, height: 600),
-            visibleFrame: visibleFrame
-        )
-        
+    func testCurrentThirdPositionFirst() {
+        let frame = CGRect(x: 0, y: 0, width: 640, height: 1055)
+        let pos = WindowGeometry.currentThirdPosition(frame: frame, visibleFrame: visibleFrame)
+        XCTAssertEqual(pos, 1)
+    }
+    
+    func testCurrentThirdPositionCenter() {
+        let frame = CGRect(x: 640, y: 0, width: 640, height: 1055)
+        let pos = WindowGeometry.currentThirdPosition(frame: frame, visibleFrame: visibleFrame)
+        XCTAssertEqual(pos, 2)
+    }
+    
+    func testCurrentThirdPositionLast() {
+        let frame = CGRect(x: 1280, y: 0, width: 640, height: 1055)
+        let pos = WindowGeometry.currentThirdPosition(frame: frame, visibleFrame: visibleFrame)
+        XCTAssertEqual(pos, 3)
+    }
+    
+    func testCurrentThirdPositionNone() {
+        let frame = CGRect(x: 100, y: 100, width: 800, height: 600)
+        let pos = WindowGeometry.currentThirdPosition(frame: frame, visibleFrame: visibleFrame)
+        XCTAssertNil(pos)
+    }
+    
+    // MARK: - Quarter Position Helper Tests
+    
+    func testQuarterFramePosition1_First() {
+        let result = WindowGeometry.quarterFrame(position: 1, visibleFrame: visibleFrame)
         XCTAssertEqual(result.origin.x, 0)
         XCTAssertEqual(result.origin.y, 0)
-        XCTAssertEqual(result.width, 1280) // 2/3 of 1920
+        XCTAssertEqual(result.width, 480)  // 1/4 of 1920
         XCTAssertEqual(result.height, 1055)
     }
     
-    func testLastTwoThirds() {
-        let result = WindowGeometry.targetFrame(
-            for: .lastTwoThirds,
-            currentFrame: CGRect(x: 100, y: 100, width: 800, height: 600),
-            visibleFrame: visibleFrame
-        )
-        
-        XCTAssertEqual(result.origin.x, 640) // 1/3 of 1920
+    func testQuarterFramePosition2_Second() {
+        let result = WindowGeometry.quarterFrame(position: 2, visibleFrame: visibleFrame)
+        XCTAssertEqual(result.origin.x, 480)  // 1/4 of 1920
         XCTAssertEqual(result.origin.y, 0)
+    }
+    
+    func testQuarterFramePosition3_Third() {
+        let result = WindowGeometry.quarterFrame(position: 3, visibleFrame: visibleFrame)
+        XCTAssertEqual(result.origin.x, 960)  // 1/2 of 1920
+        XCTAssertEqual(result.origin.y, 0)
+    }
+    
+    func testQuarterFramePosition4_Fourth() {
+        let result = WindowGeometry.quarterFrame(position: 4, visibleFrame: visibleFrame)
+        XCTAssertEqual(result.origin.x, 1440)  // 3/4 of 1920
+        XCTAssertEqual(result.origin.y, 0)
+    }
+    
+    func testCurrentQuarterPositionFirst() {
+        let frame = CGRect(x: 0, y: 0, width: 480, height: 1055)
+        let pos = WindowGeometry.currentQuarterPosition(frame: frame, visibleFrame: visibleFrame)
+        XCTAssertEqual(pos, 1)
+    }
+    
+    func testCurrentQuarterPositionSecond() {
+        let frame = CGRect(x: 480, y: 0, width: 480, height: 1055)
+        let pos = WindowGeometry.currentQuarterPosition(frame: frame, visibleFrame: visibleFrame)
+        XCTAssertEqual(pos, 2)
+    }
+    
+    func testCurrentQuarterPositionThird() {
+        let frame = CGRect(x: 960, y: 0, width: 480, height: 1055)
+        let pos = WindowGeometry.currentQuarterPosition(frame: frame, visibleFrame: visibleFrame)
+        XCTAssertEqual(pos, 3)
+    }
+    
+    func testCurrentQuarterPositionFourth() {
+        let frame = CGRect(x: 1440, y: 0, width: 480, height: 1055)
+        let pos = WindowGeometry.currentQuarterPosition(frame: frame, visibleFrame: visibleFrame)
+        XCTAssertEqual(pos, 4)
+    }
+    
+    // MARK: - Two-Thirds Position Helper Tests
+    
+    func testTwoThirdsFramePosition1() {
+        let result = WindowGeometry.twoThirdsFrame(position: 1, visibleFrame: visibleFrame)
+        XCTAssertEqual(result.origin.x, 0)
+        XCTAssertEqual(result.width, 1280) // 2/3 of 1920
+    }
+    
+    func testTwoThirdsFramePosition2() {
+        let result = WindowGeometry.twoThirdsFrame(position: 2, visibleFrame: visibleFrame)
+        XCTAssertEqual(result.origin.x, 640) // 1/3 of 1920
         XCTAssertEqual(result.width, 1280)
-        XCTAssertEqual(result.height, 1055)
+    }
+    
+    // MARK: - Three-Quarters Position Helper Tests
+    
+    func testThreeQuartersFramePosition1() {
+        let result = WindowGeometry.threeQuartersFrame(position: 1, visibleFrame: visibleFrame)
+        XCTAssertEqual(result.origin.x, 0)
+        XCTAssertEqual(result.width, 1440) // 3/4 of 1920
+    }
+    
+    func testThreeQuartersFramePosition2() {
+        let result = WindowGeometry.threeQuartersFrame(position: 2, visibleFrame: visibleFrame)
+        XCTAssertEqual(result.origin.x, 480) // 1/4 of 1920
+        XCTAssertEqual(result.width, 1440)
     }
     
     // MARK: - Maximize & Center Tests
@@ -225,7 +194,6 @@ class WindowGeometryTests: XCTestCase {
             visibleFrame: visibleFrame
         )
         
-        // Should fill entire visible frame
         XCTAssertEqual(result.origin.x, 0)
         XCTAssertEqual(result.origin.y, 0)
         XCTAssertEqual(result.width, 1920)
@@ -240,123 +208,38 @@ class WindowGeometryTests: XCTestCase {
             visibleFrame: visibleFrame
         )
         
-        // Should preserve size, just center it
         XCTAssertEqual(result.width, 800)
         XCTAssertEqual(result.height, 600)
         
-        // Check centering
         let expectedX = (CGFloat(1920) - CGFloat(800)) / 2
         let expectedY = (CGFloat(1055) - CGFloat(600)) / 2
         XCTAssertEqual(result.origin.x, expectedX)
         XCTAssertEqual(result.origin.y, expectedY)
     }
-
-
     
-    // MARK: - Portrait Screen Tests
-    
-    func testPortraitScreenFirstThird() {
-        // Portrait screen (taller than wide)
-        let portraitVisible = CGRect(x: 0, y: 0, width: 1080, height: 1920)
-        
-        let result = WindowGeometry.targetFrame(
-            for: .firstThird,
-            currentFrame: CGRect(x: 100, y: 100, width: 500, height: 500),
-            visibleFrame: portraitVisible
-        )
-        
-        // In portrait, thirds should be vertical
-        XCTAssertEqual(result.origin.x, 0)
-        XCTAssertEqual(result.origin.y, 1280) // Top third (2/3 from bottom)
-        XCTAssertEqual(result.width, 1080)
-        XCTAssertEqual(result.height, 640) // 1/3 of 1920
-    }
-    
-    func testPortraitScreenCenterThird() {
-        let portraitVisible = CGRect(x: 0, y: 0, width: 1080, height: 1920)
-        
-        let result = WindowGeometry.targetFrame(
-            for: .centerThird,
-            currentFrame: CGRect(x: 100, y: 100, width: 500, height: 500),
-            visibleFrame: portraitVisible
-        )
-        
-        XCTAssertEqual(result.origin.x, 0)
-        XCTAssertEqual(result.origin.y, 640)
-        XCTAssertEqual(result.width, 1080)
-        XCTAssertEqual(result.height, 640)
-    }
-    
-    func testPortraitScreenLastThird() {
-        let portraitVisible = CGRect(x: 0, y: 0, width: 1080, height: 1920)
-        
-        let result = WindowGeometry.targetFrame(
-            for: .lastThird,
-            currentFrame: CGRect(x: 100, y: 100, width: 500, height: 500),
-            visibleFrame: portraitVisible
-        )
-        
-        XCTAssertEqual(result.origin.x, 0)
-        XCTAssertEqual(result.origin.y, 0) // Bottom third
-        XCTAssertEqual(result.width, 1080)
-        XCTAssertEqual(result.height, 640)
-    }
-    
-    // MARK: - Edge Detection Tests
+    // MARK: - Snap Position Detection Tests
     
     func testCurrentSnapPositionLeftHalf() {
         let leftHalfFrame = CGRect(x: 0, y: 0, width: 960, height: 1055)
-        
-        let position = WindowGeometry.currentSnapPosition(
-            frame: leftHalfFrame,
-            visibleFrame: visibleFrame
-        )
-        
+        let position = WindowGeometry.currentSnapPosition(frame: leftHalfFrame, visibleFrame: visibleFrame)
         XCTAssertEqual(position, .leftHalf)
     }
     
     func testCurrentSnapPositionRightHalf() {
         let rightHalfFrame = CGRect(x: 960, y: 0, width: 960, height: 1055)
-        
-        let position = WindowGeometry.currentSnapPosition(
-            frame: rightHalfFrame,
-            visibleFrame: visibleFrame
-        )
-        
+        let position = WindowGeometry.currentSnapPosition(frame: rightHalfFrame, visibleFrame: visibleFrame)
         XCTAssertEqual(position, .rightHalf)
-    }
-    
-    func testCurrentSnapPositionTopLeftQuarter() {
-        // TopLeftQuarter is at bottom-left visually (y=0 in macOS coords)
-        let quarterFrame = CGRect(x: 0, y: 0, width: 960, height: 527.5)
-        
-        let position = WindowGeometry.currentSnapPosition(
-            frame: quarterFrame,
-            visibleFrame: visibleFrame
-        )
-        
-        XCTAssertEqual(position, .topLeftQuarter)
     }
     
     func testCurrentSnapPositionMaximized() {
         let maxFrame = CGRect(x: 0, y: 0, width: 1920, height: 1055)
-        
-        let position = WindowGeometry.currentSnapPosition(
-            frame: maxFrame,
-            visibleFrame: visibleFrame
-        )
-        
+        let position = WindowGeometry.currentSnapPosition(frame: maxFrame, visibleFrame: visibleFrame)
         XCTAssertEqual(position, .maximize)
     }
     
     func testCurrentSnapPositionNone() {
         let randomFrame = CGRect(x: 100, y: 100, width: 800, height: 600)
-        
-        let position = WindowGeometry.currentSnapPosition(
-            frame: randomFrame,
-            visibleFrame: visibleFrame
-        )
-        
+        let position = WindowGeometry.currentSnapPosition(frame: randomFrame, visibleFrame: visibleFrame)
         XCTAssertNil(position)
     }
 }

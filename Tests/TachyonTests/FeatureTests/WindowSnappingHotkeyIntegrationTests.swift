@@ -52,11 +52,11 @@ class WindowSnappingHotkeyIntegrationTests: XCTestCase {
     // MARK: - Test 2: Unregister All Shortcuts
     
     func testUnregisterAllShortcuts() throws {
-        // Register 19 shortcuts
+        // Register 12 shortcuts
         try repository.insertDefaults()
         
         let before = try repository.fetchAll()
-        XCTAssertEqual(before.count, 19)
+        XCTAssertEqual(before.count, 12)
         
         // Unregister all (delete all)
         try repository.deleteAll()
@@ -109,8 +109,8 @@ class WindowSnappingHotkeyIntegrationTests: XCTestCase {
         // Register all (fetch enabled only)
         let enabled = try repository.fetchEnabled()
         
-        // Verify only 17 would be registered
-        XCTAssertEqual(enabled.count, 17)
+        // Verify only 10 would be registered
+        XCTAssertEqual(enabled.count, 10)
         XCTAssertFalse(enabled.contains { $0.action == "leftHalf" })
         XCTAssertFalse(enabled.contains { $0.action == "rightHalf" })
     }
@@ -164,7 +164,7 @@ class WindowSnappingHotkeyIntegrationTests: XCTestCase {
         
         // Verify all enabled
         let enabled = try repository.fetchEnabled()
-        XCTAssertEqual(enabled.count, 19)
+        XCTAssertEqual(enabled.count, 12)
     }
     
     func testShortcutPersistenceAcrossReloads() throws {

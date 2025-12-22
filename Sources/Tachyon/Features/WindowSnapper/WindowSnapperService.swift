@@ -66,22 +66,46 @@ public final class WindowSnapperService {
             )
         }
         
-        // Check if we're at an edge and should traverse
+        // Handle cycle actions
         var targetFrame: CGRect
         
-        if traversalEnabled {
-            targetFrame = try calculateFrameWithTraversal(
-                action: action,
-                currentFrame: currentFrame,
-                owningScreen: owningScreen,
-                adjustedVisibleFrame: adjustedVisibleFrame
-            )
-        } else {
-            targetFrame = WindowGeometry.targetFrame(
-                for: action,
-                currentFrame: currentFrame,
-                visibleFrame: adjustedVisibleFrame
-            )
+        switch action {
+        case .cycleThirds:
+            let currentPos = WindowGeometry.currentThirdPosition(frame: currentFrame, visibleFrame: adjustedVisibleFrame)
+            let nextPos = currentPos.map { ($0 % 3) + 1 } ?? 1  // Cycle or start at first
+            targetFrame = WindowGeometry.thirdFrame(position: nextPos, visibleFrame: adjustedVisibleFrame)
+            
+        case .cycleTwoThirds:
+            let currentPos = WindowGeometry.currentTwoThirdsPosition(frame: currentFrame, visibleFrame: adjustedVisibleFrame)
+            let nextPos = currentPos.map { ($0 % 2) + 1 } ?? 1  // Cycle or start at first
+            targetFrame = WindowGeometry.twoThirdsFrame(position: nextPos, visibleFrame: adjustedVisibleFrame)
+            
+        case .cycleQuarters:
+            let currentPos = WindowGeometry.currentQuarterPosition(frame: currentFrame, visibleFrame: adjustedVisibleFrame)
+            let nextPos = currentPos.map { ($0 % 4) + 1 } ?? 1  // Cycle or start at first
+            targetFrame = WindowGeometry.quarterFrame(position: nextPos, visibleFrame: adjustedVisibleFrame)
+            
+        case .cycleThreeQuarters:
+            let currentPos = WindowGeometry.currentThreeQuartersPosition(frame: currentFrame, visibleFrame: adjustedVisibleFrame)
+            let nextPos = currentPos.map { ($0 % 2) + 1 } ?? 1  // Cycle or start at first
+            targetFrame = WindowGeometry.threeQuartersFrame(position: nextPos, visibleFrame: adjustedVisibleFrame)
+            
+        default:
+            // Check if we're at an edge and should traverse
+            if traversalEnabled {
+                targetFrame = try calculateFrameWithTraversal(
+                    action: action,
+                    currentFrame: currentFrame,
+                    owningScreen: owningScreen,
+                    adjustedVisibleFrame: adjustedVisibleFrame
+                )
+            } else {
+                targetFrame = WindowGeometry.targetFrame(
+                    for: action,
+                    currentFrame: currentFrame,
+                    visibleFrame: adjustedVisibleFrame
+                )
+            }
         }
         
         // Apply the new frame

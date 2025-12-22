@@ -36,7 +36,7 @@ class WindowSnappingShortcutManagerTests: XCTestCase {
         let shortcuts = try repository.fetchAll()
         
         // Verify returned array matches DB
-        XCTAssertEqual(shortcuts.count, 19)
+        XCTAssertEqual(shortcuts.count, 12)
         
         // Verify specific shortcuts
         let leftHalf = shortcuts.first { $0.action == "leftHalf" }
@@ -177,8 +177,8 @@ class WindowSnappingShortcutManagerTests: XCTestCase {
         // Call getEnabledShortcuts()
         let enabled = try repository.fetchEnabled()
         
-        // Verify returns only enabled (17 out of 19)
-        XCTAssertEqual(enabled.count, 17)
+        // Verify returns only enabled (10 out of 12)
+        XCTAssertEqual(enabled.count, 10)
         
         // Verify disabled ones are not in the list
         XCTAssertFalse(enabled.contains { $0.action == "leftHalf" })
