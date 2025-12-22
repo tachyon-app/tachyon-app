@@ -95,7 +95,7 @@ struct StatusBarComponent: View {
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 10)
-        .background(Color.black.opacity(0.15))
+        .background(Color.clear)
         .overlay(
             Rectangle()
                 .fill(Color.white.opacity(0.08))

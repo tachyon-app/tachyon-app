@@ -13,13 +13,18 @@ public class SearchBarWindow: NSWindow {
     public var onOpenSettings: (() -> Void)?
     
     public init() {
-        // Create the SwiftUI view with the ViewModel
+        // Create the SwiftUI view
         searchBarView = SearchBarView(viewModel: viewModel)
-        let hostingView = NSHostingView(rootView: searchBarView)
+        let hostingView = NSHostingView(rootView: searchBarView.ignoresSafeArea(.all))
         
-        // Window configuration for floating panel
+        // Configure hosting view for transparency
+        hostingView.wantsLayer = true
+        hostingView.layer?.backgroundColor = CGColor.clear
+        hostingView.layer?.isOpaque = false
+        
+        // Window configuration
         super.init(
-            contentRect: NSRect(x: 0, y: 0, width: 600, height: 500), // Keep large height for now
+            contentRect: NSRect(x: 0, y: 0, width: 680, height: 500),
             styleMask: [.borderless, .nonactivatingPanel],
             backing: .buffered,
             defer: false
@@ -27,10 +32,12 @@ public class SearchBarWindow: NSWindow {
         
         // Window properties
         self.level = .floating
-        self.backgroundColor = .clear
+        self.backgroundColor = NSColor.clear
         self.isOpaque = false
-        self.hasShadow = false  // Disable window shadow - we use SwiftUI shadows instead
+        self.hasShadow = true
         self.contentView = hostingView
+        self.contentView?.wantsLayer = true
+        self.contentView?.layer?.backgroundColor = CGColor.clear
         
         // Center on screen
         self.center()

@@ -30,7 +30,7 @@ struct SearchBarView: View {
             VStack(spacing: 0) {
                 // Search input area
                 HStack(spacing: 12) {
-                    // Purple search icon
+                    // Blue search icon
                     Image(systemName: "magnifyingglass")
                         .font(.system(size: 18, weight: .medium))
                         .foregroundColor(Color(hex: "#3B86F7"))
@@ -58,9 +58,6 @@ struct SearchBarView: View {
                 }
                 .padding(.horizontal, 20)
                 .padding(.vertical, 18)
-                .background(
-                    Color.black.opacity(0.15)
-                )
                 
                 // Divider
                 Rectangle()
@@ -128,12 +125,12 @@ struct SearchBarView: View {
                 StatusBarComponent(
                     state: viewModel.statusBarState,
                     showActionButtons: !viewModel.results.isEmpty
-                )            }
+                )
+            }
             .frame(width: 680)
             .background(
-                // Dark gradient background with proper corner radius
                 ZStack {
-                    // Main dark gradient background
+                    // Dark gradient background
                     LinearGradient(
                         colors: [
                             Color(hex: "#1a1a1a"),
@@ -157,25 +154,6 @@ struct SearchBarView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             )
             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-            .overlay(
-                // Subtle border with gradient
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .strokeBorder(
-                        LinearGradient(
-                            colors: [
-                                Color.white.opacity(0.15),
-                                Color.white.opacity(0.05)
-                            ],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        ),
-                        lineWidth: 0.5
-                    )
-            )
-            // Layered shadows for depth (Raycast-style)
-            .shadow(color: Color.black.opacity(0.6), radius: 50, x: 0, y: 20)
-            .shadow(color: Color.black.opacity(0.4), radius: 25, x: 0, y: 10)
-            .shadow(color: Color.black.opacity(0.2), radius: 10, x: 0, y: 5)
             .onAppear {
                 isSearchFocused = true
             }
