@@ -4,14 +4,16 @@ import SwiftUI
 struct ScriptOutputView: View {
     let script: ScriptRecord
     let metadata: ScriptMetadata
+    let arguments: [Int: String]
     let onDismiss: () -> Void
     @StateObject private var viewModel: ScriptOutputViewModel
     
-    init(script: ScriptRecord, metadata: ScriptMetadata, onDismiss: @escaping () -> Void = {}) {
+    init(script: ScriptRecord, metadata: ScriptMetadata, arguments: [Int: String] = [:], onDismiss: @escaping () -> Void = {}) {
         self.script = script
         self.metadata = metadata
+        self.arguments = arguments
         self.onDismiss = onDismiss
-        self._viewModel = StateObject(wrappedValue: ScriptOutputViewModel(script: script, metadata: metadata))
+        self._viewModel = StateObject(wrappedValue: ScriptOutputViewModel(script: script, metadata: metadata, arguments: arguments))
     }
     
     var body: some View {
@@ -137,27 +139,35 @@ class ScriptOutputViewModel: ObservableObject {
     
     private let script: ScriptRecord
     private let metadata: ScriptMetadata
+    private let arguments: [Int: String]
     private let executor = ScriptExecutor()
     
-    init(script: ScriptRecord, metadata: ScriptMetadata) {
+    init(script: ScriptRecord, metadata: ScriptMetadata, arguments: [Int: String] = [:]) {
         self.script = script
         self.metadata = metadata
+        self.arguments = arguments
     }
     
-    func executeScript(arguments: [Int: String] = [:]) {
+    func executeScript() {
+        executeWithArguments(arguments)
+    }
+    
+    func executeWithArguments(_ args: [Int: String]) {
+        print("🔧 ScriptOutputViewModel.executeWithArguments: \(args)")
         isRunning = true
         output = ""
         duration = nil
         errorMessage = nil
         
         let fileURL = ScriptFileManager.shared.scriptURL(for: script.fileName)
+        print("📂 ScriptOutputView executing: \(fileURL.path) with args: \(args)")
         
         Task {
             do {
                 let result = try await executor.execute(
                     fileURL: fileURL,
                     metadata: metadata,
-                    arguments: arguments,
+                    arguments: args,
                     onOutput: { [weak self] newOutput in
                         Task { @MainActor in
                             self?.output += newOutput

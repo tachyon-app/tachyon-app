@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 /// Main search bar view with results
 struct SearchBarView: View {
@@ -6,9 +7,9 @@ struct SearchBarView: View {
     @FocusState private var isSearchFocused: Bool
     
     var body: some View {
-        if let (script, metadata) = viewModel.showingScriptOutput {
+        if let (script, metadata, arguments) = viewModel.showingScriptOutput {
             // Show script output view
-            ScriptOutputView(script: script, metadata: metadata) {
+            ScriptOutputView(script: script, metadata: metadata, arguments: arguments) {
                 viewModel.showingScriptOutput = nil
             }
         } else if let (script, metadata) = viewModel.showingScriptArgumentForm {
@@ -30,30 +31,59 @@ struct SearchBarView: View {
             VStack(spacing: 0) {
                 // Search input area
                 HStack(spacing: 12) {
-                    // Blue search icon
-                    Image(systemName: "magnifyingglass")
-                        .font(.system(size: 18, weight: .medium))
-                        .foregroundColor(Color(hex: "#3B86F7"))
-                    
-                    TextField("Search for apps and commands...", text: $viewModel.query)
-                        .textFieldStyle(.plain)
-                        .font(.system(size: 20, weight: .regular, design: .default))
-                        .foregroundColor(.white)
-                        .focused($isSearchFocused)
-                        .onSubmit {
-                            viewModel.executeSelectedResult()
+                    if viewModel.isCollectingArguments {
+                        // Inline argument collection mode (Raycast-style)
+                        if let context = viewModel.inlineArgumentContext {
+                            LockedItemChip(
+                                title: context.title,
+                                icon: context.icon,
+                                iconData: context.iconData
+                            )
                         }
-                        .onExitCommand {
-                            viewModel.onHideWindow?()
+                        
+                        ForEach(Array(viewModel.inlineArguments.enumerated()), id: \.element.id) { index, argument in
+                            InlineArgumentChip(
+                                argument: argument,
+                                value: Binding(
+                                    get: { viewModel.inlineArgumentValues[argument.id] ?? "" },
+                                    set: { viewModel.inlineArgumentValues[argument.id] = $0 }
+                                ),
+                                isFocused: viewModel.focusedArgumentIndex == index,
+                                onTab: { viewModel.focusNextArgument() },
+                                onSubmit: {
+                                    if viewModel.canExecuteWithArguments {
+                                        viewModel.executeWithInlineArguments()
+                                    } else {
+                                        viewModel.focusNextArgument()
+                                    }
+                                }
+                            )
                         }
-                    
-                    if !viewModel.query.isEmpty {
-                        Button(action: { viewModel.query = "" }) {
-                            Image(systemName: "xmark.circle.fill")
-                                .font(.system(size: 16))
-                                .foregroundColor(Color.white.opacity(0.4))
+                        
+                        Spacer()
+                    } else {
+                        // Normal search mode
+                        Image(systemName: "magnifyingglass")
+                            .font(.system(size: 18, weight: .medium))
+                            .foregroundColor(Color(hex: "#3B86F7"))
+                        
+                        TextField("Search for apps and commands...", text: $viewModel.query)
+                            .textFieldStyle(.plain)
+                            .font(.system(size: 20, weight: .regular, design: .default))
+                            .foregroundColor(.white)
+                            .focused($isSearchFocused)
+                            .onSubmit {
+                                viewModel.executeSelectedResult()
+                            }
+                        
+                        if !viewModel.query.isEmpty {
+                            Button(action: { viewModel.query = "" }) {
+                                Image(systemName: "xmark.circle.fill")
+                                    .font(.system(size: 16))
+                                    .foregroundColor(Color.white.opacity(0.4))
+                            }
+                            .buttonStyle(.plain)
                         }
-                        .buttonStyle(.plain)
                     }
                 }
                 .padding(.horizontal, 20)
@@ -158,7 +188,11 @@ struct SearchBarView: View {
                 isSearchFocused = true
             }
             .onExitCommand {
-                viewModel.onHideWindow?()
+                if viewModel.isCollectingArguments {
+                    viewModel.exitInlineArgumentMode()
+                } else {
+                    viewModel.onHideWindow?()
+                }
             }
             .onHeightChange { height in
                 viewModel.onHeightChanged?(height)
@@ -202,8 +236,20 @@ class SearchBarViewModel: ObservableObject {
     @Published var results: [QueryResult] = []
     @Published var selectedIndex: Int = 0
     @Published var showingLinkForm: CustomLinkRecord? = nil
-    @Published var showingScriptOutput: (ScriptRecord, ScriptMetadata)? = nil
+    @Published var showingScriptOutput: (ScriptRecord, ScriptMetadata, [Int: String])? = nil
     @Published var showingScriptArgumentForm: (ScriptRecord, ScriptMetadata)? = nil
+    
+    // Inline argument state (Raycast-style)
+    @Published var inlineArgumentContext: InlineArgumentContext? = nil
+    @Published var inlineArguments: [InlineArgument] = []
+    @Published var inlineArgumentValues: [Int: String] = [:]
+    @Published var focusedArgumentIndex: Int = 0
+    
+    /// Whether we're in inline argument collection mode
+    var isCollectingArguments: Bool {
+        inlineArgumentContext != nil && !inlineArguments.isEmpty
+    }
+    
     @Published private var scriptMessage: String? = nil
     @Published private var scriptMessageType: ScriptMessageType = .success
     
@@ -289,7 +335,7 @@ class SearchBarViewModel: ObservableObject {
             queue: .main
         ) { [weak self] notification in
             if let (script, metadata) = notification.object as? (ScriptRecord, ScriptMetadata) {
-                self?.showingScriptOutput = (script, metadata)
+                self?.showingScriptOutput = (script, metadata, [:])
             }
         }
         
@@ -301,6 +347,28 @@ class SearchBarViewModel: ObservableObject {
         ) { [weak self] notification in
             if let (script, metadata) = notification.object as? (ScriptRecord, ScriptMetadata) {
                 self?.showingScriptArgumentForm = (script, metadata)
+            }
+        }
+        
+        // Listen for inline argument mode requests (Raycast-style)
+        NotificationCenter.default.addObserver(
+            forName: NSNotification.Name("EnterInlineArgumentMode"),
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            if let (script, metadata) = notification.object as? (ScriptRecord, ScriptMetadata) {
+                self?.enterInlineArgumentMode(script: script, metadata: metadata)
+            }
+        }
+        
+        // Listen for inline argument mode for custom links
+        NotificationCenter.default.addObserver(
+            forName: NSNotification.Name("EnterInlineLinkArgumentMode"),
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            if let link = notification.object as? CustomLinkRecord {
+                self?.enterInlineArgumentMode(link: link)
             }
         }
         
@@ -422,9 +490,11 @@ class SearchBarViewModel: ObservableObject {
     
     /// Execute a script with arguments
     func executeScript(script: ScriptRecord, metadata: ScriptMetadata, arguments: [Int: String]) {
+        print("📦 executeScript called with arguments: \(arguments)")
         Task {
             let fileURL = ScriptFileManager.shared.scriptURL(for: script.fileName)
             let executor = ScriptExecutor()
+            print("⚙️ About to execute script at \(fileURL.path) with args: \(arguments)")
             
             do {
                 let result = try await executor.execute(
@@ -432,10 +502,11 @@ class SearchBarViewModel: ObservableObject {
                     metadata: metadata,
                     arguments: arguments
                 )
+                print("✅ Script execution result: exitCode=\(result.exitCode), stdout=\(result.stdout.prefix(100))")
                 
                 await MainActor.run {
                     if result.isSuccess {
-                        showingScriptOutput = (script, metadata)
+                        showingScriptOutput = (script, metadata, arguments)
                     } else {
                         // Show error
                         updateStatusBar(indicatorEmoji: "❌", message: "Script failed")
@@ -448,7 +519,118 @@ class SearchBarViewModel: ObservableObject {
             }
         }
     }
+    
+    // MARK: - Inline Argument Collection
+    
+    /// Enter inline argument collection mode for a script
+    func enterInlineArgumentMode(script: ScriptRecord, metadata: ScriptMetadata) {
+        let args = metadata.arguments.map { InlineArgument(from: $0) }
+        inlineArgumentContext = .script(script, metadata)
+        inlineArguments = args
+        inlineArgumentValues = [:]
+        focusedArgumentIndex = 0
+        
+        // Initialize empty values for all arguments
+        for arg in args {
+            inlineArgumentValues[arg.id] = ""
+        }
+        print("📝 Entered inline argument mode for '\(script.title)' with \(args.count) arguments")
+        
+        // Reset focus after a brief delay to ensure view is rendered
+        focusedArgumentIndex = -1  // Temporarily set to invalid
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 50_000_000) // 50ms
+            focusedArgumentIndex = 0  // Now trigger focus on first argument
+        }
+    }
+    
+    /// Enter inline argument collection mode for a custom link
+    func enterInlineArgumentMode(link: CustomLinkRecord) {
+        let args = link.parameters.enumerated().map { index, param in
+            InlineArgument(position: index + 1, placeholder: param, isRequired: true, isPassword: false)
+        }
+        inlineArgumentContext = .customLink(link)
+        inlineArguments = args
+        inlineArgumentValues = [:]
+        focusedArgumentIndex = 0
+        
+        // Initialize empty values for all arguments
+        for arg in args {
+            inlineArgumentValues[arg.id] = ""
+        }
+    }
+    
+    /// Exit inline argument collection mode (cancel)
+    func exitInlineArgumentMode() {
+        inlineArgumentContext = nil
+        inlineArguments = []
+        inlineArgumentValues = [:]
+        focusedArgumentIndex = 0
+    }
+    
+    /// Move to next argument (Tab key)
+    func focusNextArgument() {
+        guard !inlineArguments.isEmpty else { return }
+        if focusedArgumentIndex < inlineArguments.count - 1 {
+            focusedArgumentIndex += 1
+        } else {
+            // Loop back to first
+            focusedArgumentIndex = 0
+        }
+    }
+    
+    /// Move to previous argument (Shift+Tab)
+    func focusPreviousArgument() {
+        guard !inlineArguments.isEmpty else { return }
+        if focusedArgumentIndex > 0 {
+            focusedArgumentIndex -= 1
+        } else {
+            // Loop to last
+            focusedArgumentIndex = inlineArguments.count - 1
+        }
+    }
+    
+    /// Check if all required arguments are filled
+    var canExecuteWithArguments: Bool {
+        for arg in inlineArguments where arg.isRequired {
+            if inlineArgumentValues[arg.id]?.isEmpty ?? true {
+                return false
+            }
+        }
+        return true
+    }
+    
+    /// Execute with collected arguments (Enter key when all required args filled)
+    func executeWithInlineArguments() {
+        guard let context = inlineArgumentContext, canExecuteWithArguments else { return }
+        
+        // Capture arguments before clearing inline state
+        let capturedArguments = inlineArgumentValues
+        print("🚀 executeWithInlineArguments: capturedArguments = \(capturedArguments)")
+        
+        switch context {
+        case .script(let script, let metadata):
+            print("🎯 Executing script '\(script.title)' with arguments: \(capturedArguments)")
+            // Exit inline mode first (clears state)
+            exitInlineArgumentMode()
+            // Execute script with captured arguments
+            executeScript(script: script, metadata: metadata, arguments: capturedArguments)
+            
+        case .customLink(let link):
+            // Construct URL with captured arguments
+            var values: [String: String] = [:]
+            for (index, param) in link.parameters.enumerated() {
+                values[param] = capturedArguments[index + 1] ?? ""
+            }
+            // Exit inline mode first
+            exitInlineArgumentMode()
+            if let url = link.constructURL(values: values) {
+                NSWorkspace.shared.open(url)
+            }
+            onHideWindow?()
+        }
+    }
 }
-
 // Need to import Combine for debounce
 import Combine
+

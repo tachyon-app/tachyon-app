@@ -68,10 +68,9 @@ public class CustomLinksPlugin: Plugin {
                 NSWorkspace.shared.open(url)
             }
         } else {
-            // Has params, need to show input form
-            // We'll post a notification that the SearchBarViewModel can listen to
+            // Has params, trigger inline argument mode (Raycast-style)
             NotificationCenter.default.post(
-                name: NSNotification.Name("ShowLinkInputForm"),
+                name: NSNotification.Name("EnterInlineLinkArgumentMode"),
                 object: link
             )
         }

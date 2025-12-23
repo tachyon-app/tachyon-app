@@ -173,18 +173,23 @@ public class ScriptRunnerPlugin: Plugin {
             return
         }
         
-        guard let metadata = metadataCache[script.id] else {
-            print("❌ Metadata not cached for script: \(script.title)")
+        // HOT-RELOAD: Re-parse metadata from file to catch any changes
+        let metadata: ScriptMetadata
+        do {
+            metadata = try parser.parse(fileURL: fileURL)
+            metadataCache[script.id] = metadata  // Update cache
+        } catch {
+            print("❌ Failed to parse metadata for script '\(script.title)': \(error)")
             return
         }
         
         // Check if script needs arguments
         let requiredArgs = metadata.arguments.filter { !$0.optional }
-        if !requiredArgs.isEmpty {
-            // TODO: Show argument input form
-            print("📝 Script requires arguments - showing input form")
+        if !metadata.arguments.isEmpty {
+            // Trigger inline argument mode instead of separate form
+            print("📝 Script requires arguments - entering inline mode")
             NotificationCenter.default.post(
-                name: NSNotification.Name("ShowScriptArgumentForm"),
+                name: NSNotification.Name("EnterInlineArgumentMode"),
                 object: (script, metadata)
             )
             return
