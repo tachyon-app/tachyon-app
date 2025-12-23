@@ -12,6 +12,9 @@ struct SearchBarView: View {
             ScriptOutputView(script: script, metadata: metadata, arguments: arguments) {
                 viewModel.showingScriptOutput = nil
             }
+            .onExitCommand {
+                viewModel.showingScriptOutput = nil
+            }
         } else if let (script, metadata) = viewModel.showingScriptArgumentForm {
             // Show script argument input form
             ScriptArgumentInputView(
@@ -25,6 +28,9 @@ struct SearchBarView: View {
                     viewModel.showingScriptArgumentForm = nil
                 }
             )
+            .onExitCommand {
+                viewModel.showingScriptArgumentForm = nil
+            }
         } else if let link = viewModel.showingLinkForm {
         } else {
             // Show normal search interface with premium dark design
@@ -188,9 +194,17 @@ struct SearchBarView: View {
                 isSearchFocused = true
             }
             .onExitCommand {
+                // Escape acts as "go back" - exit current mode or close window
                 if viewModel.isCollectingArguments {
                     viewModel.exitInlineArgumentMode()
+                } else if viewModel.showingScriptOutput != nil {
+                    viewModel.showingScriptOutput = nil
+                } else if viewModel.showingScriptArgumentForm != nil {
+                    viewModel.showingScriptArgumentForm = nil
+                } else if viewModel.showingLinkForm != nil {
+                    viewModel.showingLinkForm = nil
                 } else {
+                    // Only close window when at main search screen
                     viewModel.onHideWindow?()
                 }
             }

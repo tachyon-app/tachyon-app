@@ -107,6 +107,26 @@ public class SearchBarWindow: NSWindow {
             }
             
             if event.keyCode == 53 { // 53 is Escape
+                // Handle go-back navigation directly
+                if self.viewModel.isCollectingArguments {
+                    print("⬅️ Escape - exiting inline argument mode")
+                    self.viewModel.exitInlineArgumentMode()
+                    return nil
+                } else if self.viewModel.showingScriptOutput != nil {
+                    print("⬅️ Escape - dismissing script output")
+                    self.viewModel.showingScriptOutput = nil
+                    return nil
+                } else if self.viewModel.showingScriptArgumentForm != nil {
+                    print("⬅️ Escape - dismissing script argument form")
+                    self.viewModel.showingScriptArgumentForm = nil
+                    return nil
+                } else if self.viewModel.showingLinkForm != nil {
+                    print("⬅️ Escape - dismissing link form")
+                    self.viewModel.showingLinkForm = nil
+                    return nil
+                }
+                
+                // Only hide window when at main search screen
                 print("🛑 Escape detected in monitor - hiding search bar")
                 self.hide()
                 return nil // Consume the event
