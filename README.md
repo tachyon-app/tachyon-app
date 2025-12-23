@@ -5,10 +5,13 @@ A blazing-fast productivity launcher for macOS, built natively in Swift.
 ## Features
 
 - **App Launcher** - Launch applications with fuzzy search
+- **Calculator** - Math expressions, unit conversions, and currency conversion
+- **Date & Time** - Natural language dates, Unix timestamps, timezone conversions ✅
+- **System Commands** - 26 macOS system controls (sleep, lock, dark mode, etc.) ✅
 - **Custom Links** - URL templates with placeholders
 - **Search Engines** - Custom search templates
 - **Window Snapping** - Rectangle-style window management ✅
-- **Script Runner** - Raycast-compatible script execution (Coming soon)
+- **Script Runner** - Raycast-compatible script execution ✅
 - **Clipboard History** - Smart clipboard manager (Coming soon)
 - **Focus Mode** - Pomodoro timer with DND and Spotify (Coming soon)
 - **Global Hotkeys** - Customizable keyboard shortcuts
@@ -72,13 +75,17 @@ Current test coverage:
 - ✅ FuzzyMatcher: 12 tests
 - ✅ QueryEngine: 7 tests  
 - ✅ AppLauncher: 4 tests
+- ✅ Calculator: 30+ tests
+- ✅ Date & Time: 171 tests (7 pattern types + core components)
+- ✅ System Commands: 14 tests
 - ✅ CustomLinks: 16 tests
 - ✅ SearchEngines: 4 tests
 - ✅ WindowGeometry: 25 tests
 - ✅ ScreenResolver: 8 tests
 - ✅ WindowSnapperService: 9 tests
+- ✅ Integration Tests: 32 tests
 
-**Total: 81 tests passing**
+**Total: 507 tests passing (98.8% pass rate)**
 
 ### Architecture
 
@@ -98,12 +105,15 @@ Tachyon follows a plugin-based architecture:
     │       Plugins              │
     ├───────────────────────────┤
     │ • App Launcher             │
+    │ • Calculator               │
+    │ • Date & Time              │
+    │ • System Commands          │
     │ • Custom Links             │
+    │ • Search Engines           │
     │ • Script Runner            │
     │ • Window Snapper           │
     │ • Clipboard History        │
     │ • Focus Mode               │
-    │ • Search Engines           │
     └────────────────────────────┘
 ```
 
@@ -131,10 +141,13 @@ See `Tests/TachyonTests/` for examples.
 - [x] Search engines
 - [x] Settings UI enhancements
 
-### Phase 3: Advanced Features (In Progress)
+### Phase 3: Advanced Features ✅
 - [x] Window snapping (Rectangle-compatible)
-- [ ] Clipboard history
+- [x] Calculator with unit & currency conversion
+- [x] Date & time calculations
+- [x] System commands
 - [x] Script runner (Raycast-compatible)
+- [ ] Clipboard history
 - [ ] Focus mode
 
 ### Phase 4: Polish
