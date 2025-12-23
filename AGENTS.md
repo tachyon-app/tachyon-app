@@ -18,6 +18,468 @@
 
 ---
 
+## 🧪 Test-Driven Development (TDD)
+
+**Core Principle**: All features MUST be developed using strict Test-Driven Development. Tests are not optional - they are the specification.
+
+### TDD Workflow
+
+#### 1. Red Phase - Write Failing Tests First
+```swift
+// ALWAYS write tests BEFORE implementation
+// Tests define the contract and expected behavior
+
+import XCTest
+@testable import Tachyon
+
+class CalculatorTests: XCTestCase {
+    func testBasicAddition() {
+        let calculator = Calculator()
+        let result = calculator.evaluate("2 + 2")
+        XCTAssertEqual(result.value, 4.0)
+    }
+    
+    func testComplexExpression() {
+        let calculator = Calculator()
+        let result = calculator.evaluate("(10 + 5) * 2")
+        XCTAssertEqual(result.value, 30.0)
+    }
+}
+```
+
+#### 2. Green Phase - Minimal Implementation
+- Write the **minimum code** needed to make tests pass
+- Don't add features not covered by tests
+- Keep it simple and focused
+
+#### 3. Refactor Phase - Improve Code Quality
+- Clean up implementation while keeping tests green
+- Extract reusable components
+- Improve naming and structure
+- **Tests must remain passing throughout**
+
+### Testing Requirements
+
+#### Coverage Standards
+- **Minimum 80% code coverage** for all new features
+- **100% coverage** for critical business logic (calculations, data transformations, etc.)
+- All public APIs must have corresponding tests
+- Edge cases and error conditions must be tested
+
+#### Test Organization
+```swift
+// Organize tests by feature in Tests/ directory
+Tests/
+├── Features/
+│   ├── Calculator/
+│   │   ├── CalculatorTests.swift
+│   │   ├── ExpressionParserTests.swift
+│   │   └── UnitConverterTests.swift
+│   ├── Search/
+│   │   ├── SearchEngineTests.swift
+│   │   └── QueryParserTests.swift
+│   └── WindowSnapping/
+│       ├── SnappingEngineTests.swift
+│       └── HotkeyManagerTests.swift
+└── UI/
+    ├── SearchBarTests.swift
+    └── SettingsViewTests.swift
+```
+
+#### What to Test
+
+**✅ MUST Test:**
+1. **Business Logic** - All calculations, transformations, algorithms
+2. **Data Models** - Validation, serialization, relationships
+3. **API Contracts** - Public methods, expected inputs/outputs
+4. **Edge Cases** - Empty inputs, null values, boundary conditions
+5. **Error Handling** - Invalid inputs, network failures, exceptions
+6. **State Management** - State transitions, persistence, synchronization
+7. **Integration Points** - Database operations, external APIs, system interactions
+
+**Example - Comprehensive Test Suite:**
+```swift
+class CalculatorTests: XCTestCase {
+    var calculator: Calculator!
+    
+    override func setUp() {
+        super.setUp()
+        calculator = Calculator()
+    }
+    
+    // MARK: - Basic Operations
+    func testAddition() { /* ... */ }
+    func testSubtraction() { /* ... */ }
+    func testMultiplication() { /* ... */ }
+    func testDivision() { /* ... */ }
+    
+    // MARK: - Edge Cases
+    func testDivisionByZero() {
+        let result = calculator.evaluate("10 / 0")
+        XCTAssertTrue(result.isError)
+        XCTAssertEqual(result.errorMessage, "Division by zero")
+    }
+    
+    func testEmptyExpression() {
+        let result = calculator.evaluate("")
+        XCTAssertTrue(result.isError)
+    }
+    
+    func testInvalidSyntax() {
+        let result = calculator.evaluate("2 + + 3")
+        XCTAssertTrue(result.isError)
+    }
+    
+    // MARK: - Complex Expressions
+    func testOrderOfOperations() {
+        XCTAssertEqual(calculator.evaluate("2 + 3 * 4").value, 14.0)
+    }
+    
+    func testParentheses() {
+        XCTAssertEqual(calculator.evaluate("(2 + 3) * 4").value, 20.0)
+    }
+    
+    // MARK: - Unit Conversions
+    func testTemperatureConversion() {
+        let result = calculator.evaluate("32°F to °C")
+        XCTAssertEqual(result.value, 0.0, accuracy: 0.01)
+    }
+    
+    // MARK: - History
+    func testHistoryTracking() {
+        calculator.evaluate("2 + 2")
+        calculator.evaluate("5 * 3")
+        XCTAssertEqual(calculator.history.count, 2)
+    }
+    
+    func testHistoryLimit() {
+        for i in 1...150 {
+            calculator.evaluate("\(i) + 1")
+        }
+        XCTAssertEqual(calculator.history.count, 100) // Max 100 entries
+    }
+}
+```
+
+#### Test Quality Standards
+
+**✅ Good Tests:**
+- **Fast** - Run in milliseconds
+- **Independent** - No dependencies between tests
+- **Repeatable** - Same result every time
+- **Self-validating** - Clear pass/fail
+- **Timely** - Written before implementation
+- **Readable** - Clear intent and assertions
+
+**❌ Bad Tests:**
+- Tests that depend on external services
+- Tests that require specific execution order
+- Tests with random or time-dependent behavior
+- Tests that test implementation details instead of behavior
+- Overly complex tests that are hard to understand
+
+### Running Tests
+
+```bash
+# Run all tests
+swift test
+
+# Run specific test suite
+swift test --filter CalculatorTests
+
+# Run with coverage
+swift test --enable-code-coverage
+
+# Generate coverage report
+xcrun llvm-cov report .build/debug/TachyonPackageTests.xctest/Contents/MacOS/TachyonPackageTests
+```
+
+### Continuous Integration
+
+- All tests MUST pass before merging
+- Coverage reports must meet minimum thresholds
+- Failed tests block deployment
+- Test results should be visible in PR reviews
+
+### TDD Best Practices
+
+1. **Write the test first** - No exceptions
+2. **One test at a time** - Focus on one behavior
+3. **Keep tests simple** - One assertion per test when possible
+4. **Use descriptive names** - `testCalculatorReturnsErrorWhenDividingByZero`
+5. **Test behavior, not implementation** - Focus on what, not how
+6. **Refactor with confidence** - Tests enable safe refactoring
+7. **Mock external dependencies** - Keep tests isolated and fast
+8. **Test edge cases** - Empty, null, negative, boundary values
+9. **Document with tests** - Tests are living documentation
+10. **Keep tests maintainable** - Refactor tests as you refactor code
+
+---
+
+## 📖 Documentation Requirements
+
+**Core Principle**: Every feature MUST be extensively documented for end users. Documentation is not an afterthought - it's part of the feature.
+
+### Documentation Structure
+
+```
+docs/
+├── README.md                 # Overview and quick start
+├── FEATURES.md              # Feature catalog
+├── CALCULATOR.md            # Calculator feature guide
+├── SEARCH.md                # Search feature guide
+├── WINDOW_SNAPPING.md       # Window snapping guide
+├── CUSTOM_LINKS.md          # Custom links guide
+├── KEYBOARD_SHORTCUTS.md    # Complete shortcut reference
+├── SETTINGS.md              # Settings documentation
+├── TROUBLESHOOTING.md       # Common issues and solutions
+└── CHANGELOG.md             # Version history
+```
+
+### Feature Documentation Template
+
+Every feature MUST have a dedicated documentation file following this structure:
+
+```markdown
+# Feature Name
+
+## Overview
+Brief description of what the feature does and why it's useful.
+
+## Quick Start
+Simplest possible example to get started.
+
+## How It Works
+Detailed explanation of the feature's functionality.
+
+## Usage Examples
+Multiple real-world examples showing different use cases.
+
+## Advanced Features
+Power user features and advanced configurations.
+
+## Keyboard Shortcuts
+All relevant keyboard shortcuts for this feature.
+
+## Settings
+Configuration options and customization.
+
+## Tips & Tricks
+Best practices and productivity tips.
+
+## Troubleshooting
+Common issues and how to resolve them.
+
+## Technical Details
+(Optional) Implementation details for advanced users.
+```
+
+### Documentation Standards
+
+#### 1. User-Focused Language
+**✅ DO:**
+- "Press `⌘Space` to open Tachyon"
+- "Type your calculation and press Enter to copy the result"
+- "The calculator supports complex expressions like `(10 + 5) * 2`"
+
+**❌ DON'T:**
+- "The hotkey manager registers a global event listener"
+- "The parser tokenizes the input string"
+- "The view model observes the calculation state"
+
+#### 2. Rich Examples
+Every feature should include **at least 5-10 practical examples**:
+
+```markdown
+## Calculator Examples
+
+### Basic Arithmetic
+- `2 + 2` → 4
+- `10 - 3` → 7
+- `5 * 6` → 30
+- `100 / 4` → 25
+
+### Complex Expressions
+- `(10 + 5) * 2` → 30
+- `2^8` → 256
+- `sqrt(144)` → 12
+
+### Unit Conversions
+- `100 USD to EUR` → 92.50 EUR
+- `32°F to °C` → 0°C
+- `10 miles to km` → 16.09 km
+- `5 hours to minutes` → 300 minutes
+
+### Percentages
+- `20% of 150` → 30
+- `150 + 20%` → 180
+- `150 - 20%` → 120
+```
+
+#### 3. Visual Aids
+- Include screenshots for UI features
+- Use code blocks for examples
+- Add tables for reference information
+- Use emoji for visual scanning (✅ ❌ 💡 ⚠️)
+
+#### 4. Keyboard Shortcuts
+Always document keyboard shortcuts in macOS format:
+- `⌘` Command
+- `⌥` Option
+- `⌃` Control
+- `⇧` Shift
+- `↵` Return/Enter
+- `⌫` Delete
+- `⎋` Escape
+
+#### 5. Progressive Disclosure
+Organize from simple to complex:
+1. **Quick Start** - Get started in 30 seconds
+2. **Common Use Cases** - Cover 80% of usage
+3. **Advanced Features** - Power user capabilities
+4. **Technical Details** - For those who want to know more
+
+### Documentation Checklist
+
+When adding a new feature, ensure:
+
+- [ ] Feature has dedicated `.md` file in `docs/`
+- [ ] Feature is listed in `docs/FEATURES.md`
+- [ ] Quick start section with simple example
+- [ ] At least 5-10 usage examples
+- [ ] All keyboard shortcuts documented
+- [ ] Settings and configuration options explained
+- [ ] Screenshots for UI features
+- [ ] Troubleshooting section for common issues
+- [ ] Updated `CHANGELOG.md` with new feature
+- [ ] Cross-references to related features
+- [ ] Reviewed for clarity by someone unfamiliar with the feature
+
+### Example: Complete Feature Documentation
+
+**docs/CALCULATOR.md:**
+```markdown
+# Calculator
+
+## Overview
+Tachyon includes a powerful calculator that appears inline as you type. It supports basic arithmetic, complex expressions, unit conversions, and currency conversion.
+
+## Quick Start
+1. Open Tachyon with `⌘Space`
+2. Type `2 + 2`
+3. See the result (4) appear instantly
+4. Press `↵` to copy the result
+
+## Basic Calculations
+
+Type any mathematical expression:
+- `2 + 2` → 4
+- `10 * 5` → 50
+- `100 / 4` → 25
+- `15 - 3` → 12
+
+## Complex Expressions
+
+Use parentheses and multiple operations:
+- `(10 + 5) * 2` → 30
+- `2^8` → 256
+- `sqrt(144)` → 12
+- `sin(90)` → 1
+
+## Unit Conversions
+
+### Temperature
+- `32°F to °C` → 0°C
+- `100°C to °F` → 212°F
+
+### Distance
+- `10 miles to km` → 16.09 km
+- `5 km to meters` → 5000 m
+
+### Time
+- `2 hours to minutes` → 120 minutes
+- `90 seconds to minutes` → 1.5 minutes
+
+### Currency
+- `100 USD to EUR` → 92.50 EUR (live rates)
+- `50 GBP to USD` → 63.50 USD
+
+## History
+
+Tachyon remembers your last 100 calculations.
+- Access history with `⌘H`
+- Search through history
+- Click any result to copy it
+
+## Keyboard Shortcuts
+
+- `↵` - Copy result to clipboard
+- `⌘H` - View calculation history
+- `⎋` - Clear input
+
+## Settings
+
+### Decimal Precision
+Configure how many decimal places to show:
+- Settings → Calculator → Decimal Places (default: 2)
+
+### Currency Updates
+Currency rates update every 6 hours automatically.
+
+## Tips & Tricks
+
+💡 **Quick Copy**: Press Enter to instantly copy the result
+💡 **Chaining**: Use the previous result with `ans` variable
+💡 **Percentages**: `150 + 20%` adds 20% to 150
+
+## Troubleshooting
+
+**Q: Currency conversion shows "Rate unavailable"**
+A: Check your internet connection. Rates require network access.
+
+**Q: Calculator doesn't appear**
+A: Make sure you're typing a valid mathematical expression.
+
+**Q: Result is incorrect**
+A: Check operator precedence. Use parentheses to clarify: `(2 + 3) * 4`
+
+## Supported Functions
+
+| Function | Example | Result |
+|----------|---------|--------|
+| sqrt(x) | sqrt(16) | 4 |
+| sin(x) | sin(90) | 1 |
+| cos(x) | cos(0) | 1 |
+| tan(x) | tan(45) | 1 |
+| log(x) | log(100) | 2 |
+| ln(x) | ln(e) | 1 |
+| abs(x) | abs(-5) | 5 |
+| round(x) | round(3.7) | 4 |
+```
+
+### Keeping Documentation Updated
+
+1. **Update docs WITH code changes** - Not after
+2. **Review docs in PRs** - Documentation is part of the feature
+3. **Test examples** - Ensure all examples actually work
+4. **Get feedback** - Have someone unfamiliar test the docs
+5. **Version documentation** - Note which version features were added
+
+### Documentation Best Practices
+
+1. **Write for beginners** - Assume no prior knowledge
+2. **Show, don't tell** - Use examples liberally
+3. **Be concise** - Respect the reader's time
+4. **Use active voice** - "Press Enter" not "Enter should be pressed"
+5. **Test your examples** - Every example must work
+6. **Update screenshots** - Keep visuals current
+7. **Link related topics** - Help users discover features
+8. **Include search keywords** - Think about how users will search
+9. **Provide context** - Explain why, not just how
+10. **Maintain consistency** - Use same terminology throughout
+
+---
+
 ## 🎯 Color System
 
 ### Background Colors
@@ -697,6 +1159,34 @@ These tiny differences compound to create a premium feel. Never approximate - be
 
 ---
 
-*Last Updated: 2025-12-17*
-*Version: 1.0*
+*Last Updated: 2025-12-23*
+*Version: 2.0*
 *Maintained by: Tachyon Development Team*
+
+---
+
+## 🎯 Summary: The Three Pillars
+
+When developing for Tachyon, remember these three non-negotiable pillars:
+
+### 1. 🎨 Design Excellence
+- Clone Raycast's aesthetic exactly
+- Every pixel matters
+- Dark, tight, subtle, smooth
+
+### 2. 🧪 Test-Driven Development
+- Write tests FIRST, always
+- Minimum 80% coverage
+- Tests are the specification
+
+### 3. 📖 Comprehensive Documentation
+- Document for end users, not developers
+- Rich examples (5-10 per feature)
+- Update docs WITH code changes
+
+**A feature is not complete until it has:**
+- ✅ Pixel-perfect UI matching Raycast
+- ✅ Comprehensive test suite (80%+ coverage)
+- ✅ Complete user documentation with examples
+
+No exceptions. No shortcuts. This is what makes Tachyon exceptional.
