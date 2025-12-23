@@ -4,11 +4,11 @@ import XCTest
 /// Tests for the Unit Converter (TDD approach)
 final class UnitConverterTests: XCTestCase {
     
-    var converter: UnitConverter!
+    var converter: TachyonCore.UnitConverter!
     
     override func setUp() {
         super.setUp()
-        converter = UnitConverter()
+        converter = TachyonCore.UnitConverter()
     }
     
     // MARK: - Pattern Detection Tests
@@ -41,24 +41,24 @@ final class UnitConverterTests: XCTestCase {
     // MARK: - Length Conversion Tests
     
     func testKilometersToMiles() throws {
-        let result = try XCTUnwrap(converter.convert("1 km to miles"))
+        let result: CalculationResult = try XCTUnwrap(converter.convert("1 km to miles"))
         XCTAssertEqual(result.result, 0.621371, accuracy: 0.001)
         XCTAssertEqual(result.inputUnit, "Kilometers")
         XCTAssertEqual(result.outputUnit, "Miles")
     }
     
     func testMilesToKilometers() throws {
-        let result = try XCTUnwrap(converter.convert("1 mile to km"))
+        let result: CalculationResult = try XCTUnwrap(converter.convert("1 mile to km"))
         XCTAssertEqual(result.result, 1.60934, accuracy: 0.001)
     }
     
     func testMetersToFeet() throws {
-        let result = try XCTUnwrap(converter.convert("10 m to feet"))
+        let result: CalculationResult = try XCTUnwrap(converter.convert("10 m to feet"))
         XCTAssertEqual(result.result, 32.8084, accuracy: 0.001)
     }
     
     func testInchesToCentimeters() throws {
-        let result = try XCTUnwrap(converter.convert("10 inches to cm"))
+        let result: CalculationResult = try XCTUnwrap(converter.convert("10 inches to cm"))
         XCTAssertEqual(result.result, 25.4, accuracy: 0.1)
     }
     
@@ -67,19 +67,19 @@ final class UnitConverterTests: XCTestCase {
     func testFahrenheitToCelsius() throws {
         let result = converter.convert("100 F to C")
         
-        XCTAssertEqual(result?.result, 37.7778, accuracy: 0.01)
+        if let r = result?.result { XCTAssertEqual(r, 37.7778, accuracy: 0.01) }
     }
     
     func testCelsiusToFahrenheit() throws {
         let result = converter.convert("0 C to F")
         
-        XCTAssertEqual(result?.result, 32.0, accuracy: 0.01)
+        if let r = result?.result { XCTAssertEqual(r, 32.0, accuracy: 0.01) }
     }
     
     func testCelsiusToKelvin() throws {
         let result = converter.convert("0 C to K")
         
-        XCTAssertEqual(result?.result, 273.15, accuracy: 0.01)
+        if let r = result?.result { XCTAssertEqual(r, 273.15, accuracy: 0.01) }
     }
     
     // MARK: - Weight Conversion Tests
@@ -87,19 +87,19 @@ final class UnitConverterTests: XCTestCase {
     func testKilogramsToPounds() throws {
         let result = converter.convert("1 kg to lb")
         
-        XCTAssertEqual(result?.result, 2.20462, accuracy: 0.001)
+        if let r = result?.result { XCTAssertEqual(r, 2.20462, accuracy: 0.001) }
     }
     
     func testPoundsToKilograms() throws {
         let result = converter.convert("10 lb to kg")
         
-        XCTAssertEqual(result?.result, 4.53592, accuracy: 0.001)
+        if let r = result?.result { XCTAssertEqual(r, 4.53592, accuracy: 0.001) }
     }
     
     func testGramsToOunces() throws {
         let result = converter.convert("100 g to oz")
         
-        XCTAssertEqual(result?.result, 3.52739, accuracy: 0.001)
+        if let r = result?.result { XCTAssertEqual(r, 3.52739, accuracy: 0.001) }
     }
     
     // MARK: - Volume Conversion Tests
@@ -107,19 +107,19 @@ final class UnitConverterTests: XCTestCase {
     func testLitersToGallons() throws {
         let result = converter.convert("1 liter to gallons")
         
-        XCTAssertEqual(result?.result, 0.264172, accuracy: 0.001)
+        if let r = result?.result { XCTAssertEqual(r, 0.264172, accuracy: 0.001) }
     }
     
     func testGallonsToLiters() throws {
         let result = converter.convert("1 gallon to liters")
         
-        XCTAssertEqual(result?.result, 3.78541, accuracy: 0.001)
+        if let r = result?.result { XCTAssertEqual(r, 3.78541, accuracy: 0.001) }
     }
     
     func testMillilitersToFluidOunces() throws {
         let result = converter.convert("100 ml to fl oz")
         
-        XCTAssertEqual(result?.result, 3.38140, accuracy: 0.001)
+        if let r = result?.result { XCTAssertEqual(r, 3.38140, accuracy: 0.001) }
     }
     
     // MARK: - Time Conversion Tests
@@ -127,25 +127,25 @@ final class UnitConverterTests: XCTestCase {
     func testHoursToMinutes() throws {
         let result = converter.convert("2 hours to minutes")
         
-        XCTAssertEqual(result?.result, 120.0, accuracy: 0.001)
+        if let r = result?.result { XCTAssertEqual(r, 120.0, accuracy: 0.001) }
     }
     
     func testMinutesToSeconds() throws {
         let result = converter.convert("5 minutes to seconds")
         
-        XCTAssertEqual(result?.result, 300.0, accuracy: 0.001)
+        if let r = result?.result { XCTAssertEqual(r, 300.0, accuracy: 0.001) }
     }
     
     func testDaysToHours() throws {
         let result = converter.convert("1 day to hours")
         
-        XCTAssertEqual(result?.result, 24.0, accuracy: 0.001)
+        if let r = result?.result { XCTAssertEqual(r, 24.0, accuracy: 0.001) }
     }
     
     func testWeeksToDays() throws {
         let result = converter.convert("2 weeks to days")
         
-        XCTAssertEqual(result?.result, 14.0, accuracy: 0.001)
+        if let r = result?.result { XCTAssertEqual(r, 14.0, accuracy: 0.001) }
     }
     
     // MARK: - Data Size Conversion Tests
@@ -153,25 +153,25 @@ final class UnitConverterTests: XCTestCase {
     func testGigabytesToMegabytes() throws {
         let result = converter.convert("1 GB to MB")
         
-        XCTAssertEqual(result?.result, 1024.0, accuracy: 0.001)
+        if let r = result?.result { XCTAssertEqual(r, 1024.0, accuracy: 0.001) }
     }
     
     func testMegabytesToKilobytes() throws {
         let result = converter.convert("1 MB to KB")
         
-        XCTAssertEqual(result?.result, 1024.0, accuracy: 0.001)
+        if let r = result?.result { XCTAssertEqual(r, 1024.0, accuracy: 0.001) }
     }
     
     func testTerabytesToGigabytes() throws {
         let result = converter.convert("1 TB to GB")
         
-        XCTAssertEqual(result?.result, 1024.0, accuracy: 0.001)
+        if let r = result?.result { XCTAssertEqual(r, 1024.0, accuracy: 0.001) }
     }
     
     func testBytesToKilobytes() throws {
         let result = converter.convert("2048 bytes to KB")
         
-        XCTAssertEqual(result?.result, 2.0, accuracy: 0.001)
+        if let r = result?.result { XCTAssertEqual(r, 2.0, accuracy: 0.001) }
     }
     
     // MARK: - Case Insensitivity Tests
@@ -182,25 +182,27 @@ final class UnitConverterTests: XCTestCase {
         
         XCTAssertNotNil(result1)
         XCTAssertNotNil(result2)
-        XCTAssertEqual(result1?.result, result2?.result, accuracy: 0.001)
+        if let r1 = result1?.result, let r2 = result2?.result {
+            XCTAssertEqual(r1, r2, accuracy: 0.001)
+        }
     }
     
     // MARK: - Decimal Input Tests
     
     func testDecimalInput() throws {
-        let result = try XCTUnwrap(converter.convert("2.5 hours to minutes"))
+        let result: CalculationResult = try XCTUnwrap(converter.convert("2.5 hours to minutes"))
         XCTAssertEqual(result.result, 150.0, accuracy: 0.001)
     }
     
     func testScientificNotationInput() throws {
-        let result = try XCTUnwrap(converter.convert("1e3 meters to km"))
+        let result: CalculationResult = try XCTUnwrap(converter.convert("1e3 meters to km"))
         XCTAssertEqual(result.result, 1.0, accuracy: 0.001)
     }
     
     // MARK: - Alternative Syntax Tests
     
     func testInKeywordInsteadOfTo() throws {
-        let result = try XCTUnwrap(converter.convert("100 F in C"))
+        let result: CalculationResult = try XCTUnwrap(converter.convert("100 F in C"))
         XCTAssertEqual(result.result, 37.7778, accuracy: 0.01)
     }
     

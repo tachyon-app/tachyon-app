@@ -202,7 +202,7 @@ private class ExpressionParser {
             }
         }
         
-        guard let number = Double(numStr) else {
+        guard !numStr.isEmpty, let number = Double(numStr) else {
             throw CalculatorError.invalidNumber
         }
         
@@ -259,12 +259,18 @@ private class ExpressionParser {
     
     private func advance() {
         position += 1
-        if position < expression.count {
-            let index = expression.index(expression.startIndex, offsetBy: position)
-            currentChar = expression[index]
-        } else {
+        guard position < expression.count else {
             currentChar = nil
+            return
         }
+        
+        // Safely get character at position
+        guard let index = expression.index(expression.startIndex, offsetBy: position, limitedBy: expression.endIndex) else {
+            currentChar = nil
+            return
+        }
+        
+        currentChar = expression[index]
     }
 }
 

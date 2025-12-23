@@ -336,6 +336,16 @@ class SearchBarViewModel: ObservableObject {
         queryEngine.register(plugin: calculatorPlugin)
         print("✅ CalculatorPlugin registered")
         
+        print("🔌 Registering SystemCommandsPlugin...")
+        let systemCommands = SystemCommandsPlugin()
+        queryEngine.register(plugin: systemCommands)
+        print("✅ SystemCommandsPlugin registered")
+        
+        print("🔌 Registering DateCalculationsPlugin...")
+        let datePlugin = DateCalculationsPlugin()
+        queryEngine.register(plugin: datePlugin)
+        print("✅ DateCalculationsPlugin registered")
+        
         // Listen for status bar updates
         NotificationCenter.default.addObserver(
             forName: NSNotification.Name("UpdateStatusBar"),

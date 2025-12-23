@@ -44,7 +44,9 @@ final class CurrencyServiceTests: XCTestCase {
         XCTAssertNotNil(result)
         XCTAssertEqual(result?.fromCurrency, "USD")
         XCTAssertEqual(result?.toCurrency, "EUR")
-        XCTAssertEqual(result?.amount, 100.0, accuracy: 0.01)
+        if let amount = result?.amount {
+            XCTAssertEqual(amount, 100.0, accuracy: 0.01)
+        }
     }
     
     func testEuroSymbolConversion() async {
@@ -52,7 +54,9 @@ final class CurrencyServiceTests: XCTestCase {
         XCTAssertNotNil(result)
         XCTAssertEqual(result?.fromCurrency, "EUR")
         XCTAssertEqual(result?.toCurrency, "USD")
-        XCTAssertEqual(result?.amount, 50.0, accuracy: 0.01)
+        if let amount = result?.amount {
+            XCTAssertEqual(amount, 50.0, accuracy: 0.01)
+        }
     }
     
     func testPoundSymbolConversion() async {
@@ -76,7 +80,9 @@ final class CurrencyServiceTests: XCTestCase {
         XCTAssertNotNil(result)
         XCTAssertEqual(result?.fromCurrency, "USD")
         XCTAssertEqual(result?.toCurrency, "EUR")
-        XCTAssertEqual(result?.amount, 100.0, accuracy: 0.01)
+        if let amount = result?.amount {
+            XCTAssertEqual(amount, 100.0, accuracy: 0.01)
+        }
     }
     
     func testCurrencyCodeWithIn() async {
@@ -98,7 +104,9 @@ final class CurrencyServiceTests: XCTestCase {
     func testDecimalAmount() async {
         let result = await service.convert("$99.99 to eur")
         XCTAssertNotNil(result)
-        XCTAssertEqual(result?.amount, 99.99, accuracy: 0.01)
+        if let amount = result?.amount {
+            XCTAssertEqual(amount, 99.99, accuracy: 0.01)
+        }
     }
     
     // MARK: - Rate Fetching Tests
@@ -122,7 +130,9 @@ final class CurrencyServiceTests: XCTestCase {
         XCTAssertNotNil(result2)
         
         // Results should be the same (from cache)
-        XCTAssertEqual(result1?.result, result2?.result, accuracy: 0.01)
+        if let r1 = result1?.result, let r2 = result2?.result {
+            XCTAssertEqual(r1, r2, accuracy: 0.01)
+        }
         XCTAssertEqual(result1?.lastUpdated, result2?.lastUpdated)
     }
     
@@ -139,9 +149,11 @@ final class CurrencyServiceTests: XCTestCase {
         XCTAssertNotNil(result?.lastUpdated)
         
         // Timestamp should be recent (within last minute)
-        let now = Date()
-        let timeDiff = now.timeIntervalSince(result!.lastUpdated)
-        XCTAssertLessThan(timeDiff, 60, "Timestamp should be within last minute")
+        if let lastUpdated = result?.lastUpdated {
+            let now = Date()
+            let timeDiff = now.timeIntervalSince(lastUpdated)
+            XCTAssertLessThan(timeDiff, 60, "Timestamp should be within last minute")
+        }
     }
     
     func testFormatsTimeAgo() async {
@@ -190,7 +202,7 @@ final class CurrencyServiceTests: XCTestCase {
     // MARK: - Error Handling Tests
     
     func testInvalidCurrencyCode() async {
-        let result = await service.convert("100 XXX to USD")
+        let _ = await service.convert("100 XXX to USD")
         // Should either return nil or handle gracefully
         // Depending on implementation, might want to show error
     }
@@ -198,8 +210,8 @@ final class CurrencyServiceTests: XCTestCase {
     func testHandlesNetworkError() async {
         // This would need mock network layer
         // For now, just ensure it doesn't crash
-        await service.clearCache() // Force network call
-        let result = await service.convert("$100 to eur")
+        service.clearCache() // Force network call
+        let _ = await service.convert("$100 to eur")
         // Should either return result or nil, but not crash
     }
     
