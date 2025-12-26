@@ -13,7 +13,7 @@ A blazing-fast productivity launcher for macOS, built natively in Swift.
 - **Window Snapping** - Rectangle-style window management ✅
 - **Script Runner** - Raycast-compatible script execution ✅
 - **Clipboard History** - Smart clipboard manager (Coming soon)
-- **Focus Mode** - Pomodoro timer with DND and Spotify (Coming soon)
+- **Focus Mode** - Pomodoro timer with Spotify integration and glowing border ✅
 - **Global Hotkeys** - Customizable keyboard shortcuts
 
 ## Installation
@@ -84,8 +84,9 @@ Current test coverage:
 - ✅ ScreenResolver: 8 tests
 - ✅ WindowSnapperService: 9 tests
 - ✅ Integration Tests: 32 tests
+- ✅ Focus Mode: 39 tests
 
-**Total: 507 tests passing (98.8% pass rate)**
+**Total: 546 tests passing (98.9% pass rate)**
 
 ### Architecture
 

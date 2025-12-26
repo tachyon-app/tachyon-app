@@ -346,6 +346,11 @@ class SearchBarViewModel: ObservableObject {
         queryEngine.register(plugin: datePlugin)
         print("✅ DateCalculationsPlugin registered")
         
+        print("🔌 Registering FocusModePlugin...")
+        let focusPlugin = FocusModePlugin()
+        queryEngine.register(plugin: focusPlugin)
+        print("✅ FocusModePlugin registered")
+        
         // Listen for status bar updates
         NotificationCenter.default.addObserver(
             forName: NSNotification.Name("UpdateStatusBar"),

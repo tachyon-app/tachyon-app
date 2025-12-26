@@ -26,6 +26,12 @@ Welcome to the Tachyon documentation! This directory contains detailed guides fo
   - File management (empty trash, hidden files, eject disks)
   - App management (quit all, hide all, show desktop)
 
+- **[Focus Mode](FOCUS_MODE.md)** - Productivity timer with music integration
+  - Timer sessions (15, 25, 45, 60 minutes or custom)
+  - Spotify music integration (paste URLs to add focus music)
+  - Glowing screen border (customizable color and thickness)
+  - Floating timer bar (draggable, minimizable)
+
 ### Productivity Features
 
 - **[Search](SEARCH.md)** - Global search and app launcher

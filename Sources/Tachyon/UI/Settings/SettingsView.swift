@@ -10,6 +10,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
     case sources = "Sources"
     case scriptCommands = "Script Commands"
     case windowSnapping = "Window Snapping"
+    case focusMode = "Focus Mode"
     case hotkeys = "Hotkeys"
     
     var id: String { rawValue }
@@ -20,6 +21,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         case .sources: return "square.grid.2x2"
         case .scriptCommands: return "terminal"
         case .windowSnapping: return "rectangle.split.3x3"
+        case .focusMode: return "timer"
         case .hotkeys: return "keyboard"
         }
     }
@@ -76,6 +78,8 @@ enum SettingsTab: String, CaseIterable, Identifiable {
                         ScriptCommandsSettingsView()
                     case .windowSnapping:
                         WindowSnappingSettingsView()
+                    case .focusMode:
+                        FocusModeSettingsView()
                     case .hotkeys:
                         HotkeysSettingsView()
                     }
