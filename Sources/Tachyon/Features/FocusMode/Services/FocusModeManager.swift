@@ -11,6 +11,7 @@ public class FocusModeManager: ObservableObject {
     @Published public private(set) var isActive: Bool = false
     
     // Settings
+    @Published public var isMusicEnabled: Bool = true
     @Published public var musicItems: [SpotifyItem] = []
     @Published public var borderSettings: FocusBorderSettings = FocusBorderSettings()
     @Published public var lastDuration: TimeInterval = 1500 // 25 min default
@@ -30,8 +31,8 @@ public class FocusModeManager: ObservableObject {
         lastDuration = duration
         saveSettings()
         
-        // Select random music if available
-        let selectedMusic = musicItems.randomElement()
+        // Select random music if available and enabled
+        let selectedMusic = isMusicEnabled ? musicItems.randomElement() : nil
         
         // Create and start session
         var session = FocusSession(
@@ -47,18 +48,17 @@ public class FocusModeManager: ObservableObject {
         // Start timer
         startTimer()
         
-        // Play music if selected
-        if let music = selectedMusic {
+        // Play music if selected and enabled
+        if isMusicEnabled, let music = selectedMusic {
             Task {
                 try? await spotifyPlayer.play(item: music)
             }
         }
         
-        // Show border if enabled (disabled temporarily - causing crashes)
-        // TODO: Fix FocusBorderWindowController and re-enable
-        // if borderSettings.isEnabled {
-        //     FocusBorderWindowController.shared.show(settings: borderSettings)
-        // }
+        // Show border if enabled
+        if borderSettings.isEnabled {
+            FocusBorderWindowController.shared.show(settings: borderSettings)
+        }
     }
     
     /// Pause the current session
@@ -196,6 +196,8 @@ public class FocusModeManager: ObservableObject {
     // MARK: - Persistence
     
     private func loadSettings() {
+        isMusicEnabled = UserDefaults.standard.object(forKey: "focusMusicEnabled") as? Bool ?? true
+        
         if let data = UserDefaults.standard.data(forKey: "focusMusicItems"),
            let items = try? JSONDecoder().decode([SpotifyItem].self, from: data) {
             musicItems = items
@@ -210,7 +212,10 @@ public class FocusModeManager: ObservableObject {
         if lastDuration == 0 { lastDuration = 1500 }
     }
     
-    private func saveSettings() {
+    
+    public func saveSettings() {
+        UserDefaults.standard.set(isMusicEnabled, forKey: "focusMusicEnabled")
+        
         if let data = try? JSONEncoder().encode(musicItems) {
             UserDefaults.standard.set(data, forKey: "focusMusicItems")
         }

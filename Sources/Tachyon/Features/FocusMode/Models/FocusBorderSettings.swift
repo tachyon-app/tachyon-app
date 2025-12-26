@@ -3,17 +3,51 @@ import Foundation
 /// Settings for the focus mode glowing border
 public struct FocusBorderSettings: Codable, Equatable {
     public var isEnabled: Bool
-    public var colorHex: String
+    public var color: BorderColor
     public var thickness: BorderThickness
     
     public init(
         isEnabled: Bool = false,
-        colorHex: String = "#007AFF",
+        color: BorderColor = .blue,
         thickness: BorderThickness = .medium
     ) {
         self.isEnabled = isEnabled
-        self.colorHex = colorHex
+        self.color = color
         self.thickness = thickness
+    }
+    
+    // Legacy support for colorHex
+    public var colorHex: String {
+        color.hex
+    }
+}
+
+/// Predefined colors for the focus border
+public enum BorderColor: String, Codable, CaseIterable, Identifiable {
+    case blue = "Blue"
+    case purple = "Purple"
+    case pink = "Pink"
+    case red = "Red"
+    case orange = "Orange"
+    case yellow = "Yellow"
+    case green = "Green"
+    case cyan = "Cyan"
+    case white = "White"
+    
+    public var id: String { rawValue }
+    
+    public var hex: String {
+        switch self {
+        case .blue: return "#007AFF"
+        case .purple: return "#AF52DE"
+        case .pink: return "#FF2D55"
+        case .red: return "#FF3B30"
+        case .orange: return "#FF9500"
+        case .yellow: return "#FFCC00"
+        case .green: return "#34C759"
+        case .cyan: return "#5AC8FA"
+        case .white: return "#FFFFFF"
+        }
     }
 }
 

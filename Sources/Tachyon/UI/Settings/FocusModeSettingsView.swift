@@ -43,85 +43,97 @@ struct FocusModeSettingsView: View {
     private var spotifyMusicSection: some View {
         SettingsSection(title: "Focus Music") {
             VStack(alignment: .leading, spacing: 16) {
-                Text("Add Spotify tracks, albums, or playlists to play during focus sessions.")
-                    .font(.system(size: 13))
-                    .foregroundColor(Color.white.opacity(0.6))
-                
-                // URL Input Field
-                HStack(spacing: 12) {
-                    ZStack(alignment: .leading) {
-                        // Custom placeholder (always visible when empty)
-                        if spotifyURLInput.isEmpty {
-                            Text("Paste Spotify URL...")
-                                .font(.system(size: 13))
-                                .foregroundColor(Color.white.opacity(0.4))
-                                .padding(.horizontal, 12)
+                // Enable/Disable Toggle
+                SettingsRow(label: "Play music during focus") {
+                    Toggle("", isOn: $manager.isMusicEnabled)
+                        .toggleStyle(.switch)
+                        .labelsHidden()
+                        .onChange(of: manager.isMusicEnabled) { _ in
+                            manager.saveSettings()
                         }
-                        
-                        TextField("", text: $spotifyURLInput)
-                            .textFieldStyle(.plain)
-                            .font(.system(size: 13))
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 8)
-                            .foregroundColor(.white)
-                            .focused($isTextFieldFocused)
-                            .onSubmit {
-                                addSpotifyItem()
+                }
+                
+                if manager.isMusicEnabled {
+                    Text("Add Spotify tracks, albums, or playlists to play during focus sessions.")
+                        .font(.system(size: 13))
+                        .foregroundColor(Color.white.opacity(0.6))
+                    
+                    // URL Input Field
+                    HStack(spacing: 12) {
+                        ZStack(alignment: .leading) {
+                            // Custom placeholder (always visible when empty)
+                            if spotifyURLInput.isEmpty {
+                                Text("Paste Spotify URL...")
+                                    .font(.system(size: 13))
+                                    .foregroundColor(Color.white.opacity(0.4))
+                                    .padding(.horizontal, 12)
                             }
-                            .onChange(of: spotifyURLInput) { newValue in
-                                // Auto-detect pasted Spotify URLs (only if not already loading)
-                                guard !isLoadingMetadata else { return }
-                                if newValue.contains("open.spotify.com") && metadataService.isValidSpotifyURL(newValue) {
+                            
+                            TextField("", text: $spotifyURLInput)
+                                .textFieldStyle(.plain)
+                                .font(.system(size: 13))
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 8)
+                                .foregroundColor(.white)
+                                .focused($isTextFieldFocused)
+                                .onSubmit {
                                     addSpotifyItem()
                                 }
+                                .onChange(of: spotifyURLInput) { newValue in
+                                    // Auto-detect pasted Spotify URLs (only if not already loading)
+                                    guard !isLoadingMetadata else { return }
+                                    if newValue.contains("open.spotify.com") && metadataService.isValidSpotifyURL(newValue) {
+                                        addSpotifyItem()
+                                    }
+                                }
+                        }
+                        .background(Color(hex: "#252525"))
+                        .cornerRadius(6)
+                        
+                        Button(action: addSpotifyItem) {
+                            if isLoadingMetadata {
+                                ProgressView()
+                                    .scaleEffect(0.7)
+                                    .frame(width: 60)
+                            } else {
+                                Text("Add")
+                                    .font(.system(size: 13, weight: .medium))
+                                    .foregroundColor(.white)
+                                    .frame(width: 60)
                             }
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.vertical, 8)
+                        .padding(.horizontal, 16)
+                        .background(Color(hex: "#3B86F7"))
+                        .cornerRadius(6)
+                        .disabled(spotifyURLInput.isEmpty || isLoadingMetadata)
+                        .opacity(spotifyURLInput.isEmpty ? 0.5 : 1)
                     }
-                    .background(Color(hex: "#252525"))
-                    .cornerRadius(6)
                     
-                    Button(action: addSpotifyItem) {
-                        if isLoadingMetadata {
-                            ProgressView()
-                                .scaleEffect(0.7)
-                                .frame(width: 60)
-                        } else {
-                            Text("Add")
-                                .font(.system(size: 13, weight: .medium))
-                                .foregroundColor(.white)
-                                .frame(width: 60)
-                        }
+                    // Error Message
+                    if let error = errorMessage {
+                        Text(error)
+                            .font(.system(size: 11))
+                            .foregroundColor(.red)
                     }
-                    .buttonStyle(.plain)
-                    .padding(.vertical, 8)
-                    .padding(.horizontal, 16)
-                    .background(Color(hex: "#3B86F7"))
-                    .cornerRadius(6)
-                    .disabled(spotifyURLInput.isEmpty || isLoadingMetadata)
-                    .opacity(spotifyURLInput.isEmpty ? 0.5 : 1)
-                }
-                
-                // Error Message
-                if let error = errorMessage {
-                    Text(error)
-                        .font(.system(size: 11))
-                        .foregroundColor(.red)
-                }
-                
-                // Music Items List
-                if !manager.musicItems.isEmpty {
-                    VStack(spacing: 8) {
-                        ForEach(manager.musicItems) { item in
-                            SpotifyItemRow(item: item) {
-                                manager.removeMusicItem(item)
+                    
+                    // Music Items List
+                    if !manager.musicItems.isEmpty {
+                        VStack(spacing: 8) {
+                            ForEach(manager.musicItems) { item in
+                                SpotifyItemRow(item: item) {
+                                    manager.removeMusicItem(item)
+                                }
                             }
                         }
+                        .padding(.top, 8)
+                    } else {
+                        Text("No music added. Paste a Spotify URL above to get started.")
+                            .font(.system(size: 12))
+                            .foregroundColor(Color.white.opacity(0.4))
+                            .padding(.vertical, 12)
                     }
-                    .padding(.top, 8)
-                } else {
-                    Text("No music added. Paste a Spotify URL above to get started.")
-                        .font(.system(size: 12))
-                        .foregroundColor(Color.white.opacity(0.4))
-                        .padding(.vertical, 12)
                 }
             }
         }
@@ -144,47 +156,54 @@ struct FocusModeSettingsView: View {
                 
                 if manager.borderSettings.isEnabled {
                     // Color Picker
-                    SettingsRow(label: "Border Color") {
-                        ColorPicker("", selection: borderColorBinding)
-                            .labelsHidden()
-                            .onChange(of: manager.borderSettings.colorHex) { _ in
-                                saveBorderSettings()
-                            }
-                    }
-                    
-                    // Thickness Picker
-                    SettingsRow(label: "Border Thickness") {
-                        Picker("", selection: $manager.borderSettings.thickness) {
-                            ForEach(BorderThickness.allCases, id: \.self) { thickness in
-                                Text(thickness.rawValue).tag(thickness)
+                    SettingsRow(label: "Glow Color") {
+                        Picker("", selection: $manager.borderSettings.color) {
+                            ForEach(BorderColor.allCases) { color in
+                                Text(color.rawValue).tag(color)
                             }
                         }
+                        .pickerStyle(.menu)
+                        .frame(width: 120)
+                        .onChange(of: manager.borderSettings.color) { _ in
+                            saveBorderSettings()
+                        }
+                    }
+                    
+                    // Glow Spread Picker (renamed from Thickness)
+                    SettingsRow(label: "Glow Spread") {
+                        Picker("", selection: $manager.borderSettings.thickness) {
+                            Text("Subtle").tag(BorderThickness.thin)
+                            Text("Medium").tag(BorderThickness.medium)
+                            Text("Intense").tag(BorderThickness.thick)
+                        }
                         .pickerStyle(.segmented)
-                        .frame(width: 200)
+                        .frame(width: 220)
                         .onChange(of: manager.borderSettings.thickness) { _ in
                             saveBorderSettings()
                         }
                     }
                     
-                    Text("The border will appear when you start a focus session.")
+                    // Preview Button
+                    Button(action: previewBorder) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "eye")
+                            Text("Preview (3 seconds)")
+                        }
+                        .font(.system(size: 12))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(Color(hex: "#333333"))
+                        .cornerRadius(6)
+                    }
+                    .buttonStyle(.plain)
+                    
+                    Text("The glow will appear around your screen during focus sessions.")
                         .font(.system(size: 11))
                         .foregroundColor(Color.white.opacity(0.4))
                 }
             }
         }
-    }
-    
-    // MARK: - Color Binding
-    
-    private var borderColorBinding: Binding<Color> {
-        Binding(
-            get: { Color(hex: manager.borderSettings.colorHex) },
-            set: { newColor in
-                if let hex = newColor.toHex() {
-                    manager.borderSettings.colorHex = hex
-                }
-            }
-        )
     }
     
     // MARK: - Actions
