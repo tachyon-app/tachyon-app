@@ -14,22 +14,36 @@ public class FocusModePlugin: Plugin {
     public func search(query: String) -> [QueryResult] {
         let lowercased = query.lowercased().trimmingCharacters(in: .whitespaces)
         
-        // Handle stop/pause commands
-        if lowercased == "stop focus" || lowercased == "end focus" {
-            return [createStopResult()]
+        // Handle stop/pause commands (with fuzzy matching)
+        if "stop focus".hasPrefix(lowercased) || "end focus".hasPrefix(lowercased) {
+            if manager.isActive {
+                return [createStopResult()]
+            }
         }
         
-        if lowercased == "pause focus" {
-            return [createPauseResult()]
+        if "pause focus".hasPrefix(lowercased) {
+            if manager.isActive && manager.currentSession?.state == .active {
+                return [createPauseResult()]
+            }
         }
         
-        if lowercased == "resume focus" {
-            return [createResumeResult()]
+        if "resume focus".hasPrefix(lowercased) {
+            if manager.isActive && manager.currentSession?.state == .paused {
+                return [createResumeResult()]
+            }
         }
         
-        // Check if query starts with "focus"
-        guard lowercased.hasPrefix("focus") else {
+        // Check if query is a prefix of "focus" (fuzzy matching) or starts with "focus"
+        let isFuzzyMatch = "focus".hasPrefix(lowercased) && lowercased.count >= 2
+        let isExactPrefix = lowercased.hasPrefix("focus")
+        
+        guard isFuzzyMatch || isExactPrefix else {
             return []
+        }
+        
+        // If still typing "focus", show quick focus option
+        if isFuzzyMatch && !isExactPrefix {
+            return [createQuickFocusResult()]
         }
         
         // Parse duration from query

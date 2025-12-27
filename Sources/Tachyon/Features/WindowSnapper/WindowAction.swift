@@ -32,19 +32,19 @@ public enum WindowAction: String, CaseIterable, Codable {
     /// Human-readable name for the action
     public var displayName: String {
         switch self {
-        case .leftHalf: return "Left Half"
-        case .rightHalf: return "Right Half"
-        case .topHalf: return "Top Half"
-        case .bottomHalf: return "Bottom Half"
-        case .cycleQuarters: return "Cycle Quarters"
-        case .cycleThreeQuarters: return "Cycle Three Quarters"
-        case .cycleThirds: return "Cycle Thirds"
-        case .cycleTwoThirds: return "Cycle Two Thirds"
-        case .maximize: return "Maximize"
-        case .fullscreen: return "Fullscreen"
-        case .center: return "Center"
-        case .nextDisplay: return "Next Display"
-        case .previousDisplay: return "Previous Display"
+        case .leftHalf: return "Window Management Left Half"
+        case .rightHalf: return "Window Management Right Half"
+        case .topHalf: return "Window Management Top Half"
+        case .bottomHalf: return "Window Management Bottom Half"
+        case .cycleQuarters: return "Window Management Cycle Quarters"
+        case .cycleThreeQuarters: return "Window Management Cycle Three Quarters"
+        case .cycleThirds: return "Window Management Cycle Thirds"
+        case .cycleTwoThirds: return "Window Management Cycle Two Thirds"
+        case .maximize: return "Window Management Maximize"
+        case .fullscreen: return "Window Management Fullscreen"
+        case .center: return "Window Management Center"
+        case .nextDisplay: return "Window Management Next Display"
+        case .previousDisplay: return "Window Management Previous Display"
         }
     }
 }
