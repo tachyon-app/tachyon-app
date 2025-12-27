@@ -110,8 +110,8 @@ public class FocusModeManager: ObservableObject {
         }
     }
     
-    /// Complete the current session
-    private func completeSession() {
+    /// Complete the current session (ends immediately with success)
+    public func completeSession() {
         guard var session = currentSession else { return }
         session.complete()
         currentSession = nil

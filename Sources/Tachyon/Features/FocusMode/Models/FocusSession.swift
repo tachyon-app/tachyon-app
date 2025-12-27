@@ -44,6 +44,12 @@ public struct FocusSession: Identifiable {
         return state == .active && remainingTime <= 0
     }
     
+    /// Progress from 0.0 (just started) to 1.0 (complete)
+    public var progress: Double {
+        guard duration > 0 else { return 0 }
+        return max(0, min(1, 1 - (remainingTime / duration)))
+    }
+    
     // MARK: - State Transitions
     
     public mutating func start() {

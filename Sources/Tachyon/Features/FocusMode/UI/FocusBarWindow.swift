@@ -61,11 +61,13 @@ public class FocusBarWindowController: ObservableObject {
     public func minimize() {
         hide()
         isMinimized = true
+        FocusStatusBarController.shared.show()
     }
     
     /// Restore from minimized state
     public func restore() {
         isMinimized = false
+        FocusStatusBarController.shared.hide()
         show()
     }
 }
@@ -83,63 +85,89 @@ struct FocusBarView: View {
         return String(format: "%02d:%02d", minutes, seconds)
     }
     
+    var progressValue: Double {
+        manager.currentSession?.progress ?? 0
+    }
+    
+    /// Progress bar color - matches glow border if enabled, otherwise uses default cyan
+    var progressColor: Color {
+        if manager.borderSettings.isEnabled {
+            return Color(hex: manager.borderSettings.color.hex)
+        } else {
+            return Color(hex: "#5AC8FA") // Default cyan
+        }
+    }
+    
     var body: some View {
-        HStack(spacing: 12) {
-            // Timer display
-            VStack(alignment: .leading, spacing: 2) {
-                Text(remainingTimeString)
-                    .font(.system(size: 28, weight: .semibold, design: .monospaced))
-                    .foregroundColor(.white)
+        VStack(spacing: 8) {
+            HStack(spacing: 12) {
+                // Timer display
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(remainingTimeString)
+                        .font(.system(size: 28, weight: .semibold, design: .monospaced))
+                        .foregroundColor(.white)
+                    
+                    if let goal = manager.currentSession?.goal, !goal.isEmpty {
+                        Text(goal)
+                            .font(.caption)
+                            .foregroundColor(.white.opacity(0.7))
+                            .lineLimit(1)
+                    }
+                }
                 
-                if let goal = manager.currentSession?.goal, !goal.isEmpty {
-                    Text(goal)
-                        .font(.caption)
-                        .foregroundColor(.white.opacity(0.7))
-                        .lineLimit(1)
+                Spacer()
+                
+                // Control buttons (visible on hover)
+                if isHovering {
+                    HStack(spacing: 4) {
+                        // Pause/Resume button
+                        FocusBarButton(
+                            systemName: manager.currentSession?.state == .paused ? "play.fill" : "pause.fill",
+                            action: {
+                                if manager.currentSession?.state == .paused {
+                                    manager.resumeSession()
+                                } else {
+                                    manager.pauseSession()
+                                }
+                            }
+                        )
+                        
+                        // Stop button
+                        FocusBarButton(
+                            systemName: "xmark",
+                            action: {
+                                manager.stopSession()
+                                FocusBarWindowController.shared.hide()
+                            }
+                        )
+                        
+                        // Minimize button
+                        FocusBarButton(
+                            systemName: "minus",
+                            action: {
+                                FocusBarWindowController.shared.minimize()
+                            }
+                        )
+                    }
                 }
             }
             
-            Spacer()
-            
-            // Control buttons (visible on hover)
-            if isHovering {
-                HStack(spacing: 8) {
-                    // Pause/Resume button
-                    Button(action: {
-                        if manager.currentSession?.state == .paused {
-                            manager.resumeSession()
-                        } else {
-                            manager.pauseSession()
-                        }
-                    }) {
-                        Image(systemName: manager.currentSession?.state == .paused ? "play.fill" : "pause.fill")
-                            .font(.system(size: 14))
-                            .foregroundColor(.white)
-                    }
-                    .buttonStyle(.plain)
+            // Progress bar
+            GeometryReader { geometry in
+                ZStack(alignment: .leading) {
+                    // Background track
+                    RoundedRectangle(cornerRadius: 2)
+                        .fill(Color.white.opacity(0.2))
+                        .frame(height: 4)
                     
-                    // Stop button
-                    Button(action: {
-                        manager.stopSession()
-                        FocusBarWindowController.shared.hide()
-                    }) {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 12))
-                            .foregroundColor(.white.opacity(0.7))
-                    }
-                    .buttonStyle(.plain)
-                    
-                    // Minimize button
-                    Button(action: {
-                        FocusBarWindowController.shared.minimize()
-                    }) {
-                        Image(systemName: "minus")
-                            .font(.system(size: 12))
-                            .foregroundColor(.white.opacity(0.7))
-                    }
-                    .buttonStyle(.plain)
+                    // Progress fill
+                    RoundedRectangle(cornerRadius: 2)
+                        .fill(progressColor)
+                        .frame(width: geometry.size.width * progressValue, height: 4)
+                        .animation(.linear(duration: 0.5), value: progressValue)
                 }
             }
+            .frame(height: 4)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
@@ -154,6 +182,34 @@ struct FocusBarView: View {
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .onHover { hovering in
             withAnimation(.easeInOut(duration: 0.2)) {
+                isHovering = hovering
+            }
+        }
+    }
+}
+
+/// Button with proper hit area for focus bar
+struct FocusBarButton: View {
+    let systemName: String
+    let action: () -> Void
+    
+    @State private var isHovering = false
+    
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: systemName)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(.white)
+                .frame(width: 28, height: 28)
+                .background(
+                    Circle()
+                        .fill(isHovering ? Color.white.opacity(0.2) : Color.clear)
+                )
+                .contentShape(Circle())
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering in
+            withAnimation(.easeInOut(duration: 0.15)) {
                 isHovering = hovering
             }
         }
