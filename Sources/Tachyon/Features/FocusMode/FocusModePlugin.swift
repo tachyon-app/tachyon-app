@@ -87,7 +87,7 @@ public class FocusModePlugin: Plugin {
             alwaysShow: true,
             action: { [weak self] in
                 self?.manager.startSession(duration: duration)
-                FocusBarWindowController.shared.show()
+                // UI (floating window or status bar) is now shown by startSession based on preference
             }
         )
     }
@@ -106,7 +106,7 @@ public class FocusModePlugin: Plugin {
             alwaysShow: true,
             action: { [weak self] in
                 self?.manager.startSession(duration: duration)
-                FocusBarWindowController.shared.show()
+                // UI (floating window or status bar) is now shown by startSession based on preference
             }
         )
     }
@@ -128,7 +128,7 @@ public class FocusModePlugin: Plugin {
                 alwaysShow: true,
                 action: { [weak self] in
                     self?.manager.startSession(duration: TimeInterval(preset.minutes * 60))
-                    FocusBarWindowController.shared.show()
+                    // UI (floating window or status bar) is now shown by startSession based on preference
                 }
             )
         }

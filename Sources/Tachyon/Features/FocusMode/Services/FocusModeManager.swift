@@ -15,6 +15,7 @@ public class FocusModeManager: ObservableObject {
     @Published public var musicItems: [SpotifyItem] = []
     @Published public var borderSettings: FocusBorderSettings = FocusBorderSettings()
     @Published public var lastDuration: TimeInterval = 1500 // 25 min default
+    @Published public var prefersStatusBar: Bool = false // true = minimized to status bar, false = floating window
     
     private var timer: Timer?
     private let spotifyPlayer = SpotifyPlayerService()
@@ -58,6 +59,13 @@ public class FocusModeManager: ObservableObject {
         // Show border if enabled
         if borderSettings.isEnabled {
             FocusBorderWindowController.shared.show(settings: borderSettings)
+        }
+        
+        // Show timer UI based on user preference
+        if prefersStatusBar {
+            FocusStatusBarController.shared.show()
+        } else {
+            FocusBarWindowController.shared.show()
         }
     }
     
@@ -178,6 +186,7 @@ public class FocusModeManager: ObservableObject {
     
     private func loadSettings() {
         isMusicEnabled = UserDefaults.standard.object(forKey: "focusMusicEnabled") as? Bool ?? true
+        prefersStatusBar = UserDefaults.standard.bool(forKey: "focusPrefersStatusBar")
         
         if let data = UserDefaults.standard.data(forKey: "focusMusicItems"),
            let items = try? JSONDecoder().decode([SpotifyItem].self, from: data) {
@@ -196,6 +205,7 @@ public class FocusModeManager: ObservableObject {
     
     public func saveSettings() {
         UserDefaults.standard.set(isMusicEnabled, forKey: "focusMusicEnabled")
+        UserDefaults.standard.set(prefersStatusBar, forKey: "focusPrefersStatusBar")
         
         if let data = try? JSONEncoder().encode(musicItems) {
             UserDefaults.standard.set(data, forKey: "focusMusicItems")

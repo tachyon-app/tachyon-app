@@ -62,6 +62,10 @@ public class FocusBarWindowController: ObservableObject {
         hide()
         isMinimized = true
         FocusStatusBarController.shared.show()
+        
+        // Save preference for future sessions
+        FocusModeManager.shared.prefersStatusBar = true
+        FocusModeManager.shared.saveSettings()
     }
     
     /// Restore from minimized state
@@ -69,6 +73,10 @@ public class FocusBarWindowController: ObservableObject {
         isMinimized = false
         FocusStatusBarController.shared.hide()
         show()
+        
+        // Save preference for future sessions
+        FocusModeManager.shared.prefersStatusBar = false
+        FocusModeManager.shared.saveSettings()
     }
 }
 
