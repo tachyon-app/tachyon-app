@@ -148,33 +148,14 @@ public class FocusModeManager: ObservableObject {
     // MARK: - Notifications
     
     private func sendCompletionNotification(goal: String?) {
-        // Ensure we're on the main thread
-        DispatchQueue.main.async {
-            // Play a nicer sound
-            if let sound = NSSound(named: "Glass") {
-                sound.play()
-            } else {
-                NSSound.beep()
-            }
-            
-            // Show a visible alert dialog
-            let alert = NSAlert()
-            alert.messageText = "Focus Session Complete! 🎉"
-            alert.informativeText = goal ?? "Great work! Time for a break."
-            alert.alertStyle = .informational
-            alert.addButton(withTitle: "OK")
-            alert.icon = NSImage(systemSymbolName: "checkmark.circle.fill", accessibilityDescription: nil)
-            
-            // Bring app to front and show alert
-            NSApp.activate(ignoringOtherApps: true)
-            alert.runModal()
-            
-            // Also post to status bar for search window
-            NotificationCenter.default.post(
-                name: NSNotification.Name("UpdateStatusBar"),
-                object: ("🎉", "Focus session complete!")
-            )
-        }
+        // Show custom notification window (styled like Raycast)
+        FocusCompletionNotification.show(goal: goal)
+        
+        // Also post to internal notification center
+        NotificationCenter.default.post(
+            name: NSNotification.Name("UpdateStatusBar"),
+            object: ("🎉", "Focus session complete!")
+        )
     }
     
     // MARK: - Music Management
