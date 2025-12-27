@@ -118,8 +118,8 @@ public class FocusModeManager: ObservableObject {
         isActive = false
         timer?.invalidate()
         
-        // Hide border
-        FocusBorderWindowController.shared.hide()
+        // Flash green border for celebration
+        FocusBorderWindowController.shared.flashGreen()
         
         // Send notification
         sendCompletionNotification(goal: session.goal)

@@ -40,6 +40,73 @@ public class FocusBorderWindowController {
         windows.removeAll()
     }
     
+    /// Flash green border twice for completion celebration
+    public func flashGreen() {
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            
+            // Create green settings
+            var greenSettings = FocusBorderSettings()
+            greenSettings.isEnabled = true
+            greenSettings.color = .green
+            greenSettings.thickness = .thick
+            
+            // Show green border
+            self.hideInternal()
+            for screen in NSScreen.screens {
+                if let window = self.createWindow(for: screen, settings: greenSettings) {
+                    window.alphaValue = 0
+                    self.windows.append(window)
+                    window.orderFrontRegardless()
+                }
+            }
+            
+            // Flash animation: fade in/out twice
+            let flashDuration: TimeInterval = 0.25
+            let pauseDuration: TimeInterval = 0.1
+            
+            // First flash: fade in
+            NSAnimationContext.runAnimationGroup({ context in
+                context.duration = flashDuration
+                for window in self.windows {
+                    window.animator().alphaValue = 1
+                }
+            }, completionHandler: {
+                // First flash: fade out
+                DispatchQueue.main.asyncAfter(deadline: .now() + pauseDuration) {
+                    NSAnimationContext.runAnimationGroup({ context in
+                        context.duration = flashDuration
+                        for window in self.windows {
+                            window.animator().alphaValue = 0.3
+                        }
+                    }, completionHandler: {
+                        // Second flash: fade in
+                        DispatchQueue.main.asyncAfter(deadline: .now() + pauseDuration) {
+                            NSAnimationContext.runAnimationGroup({ context in
+                                context.duration = flashDuration
+                                for window in self.windows {
+                                    window.animator().alphaValue = 1
+                                }
+                            }, completionHandler: {
+                                // Second flash: fade out and hide
+                                DispatchQueue.main.asyncAfter(deadline: .now() + pauseDuration) {
+                                    NSAnimationContext.runAnimationGroup({ context in
+                                        context.duration = flashDuration * 1.5
+                                        for window in self.windows {
+                                            window.animator().alphaValue = 0
+                                        }
+                                    }, completionHandler: {
+                                        self.hideInternal()
+                                    })
+                                }
+                            })
+                        }
+                    })
+                }
+            })
+        }
+    }
+    
     // MARK: - Window Creation
     
     private func createWindow(for screen: NSScreen, settings: FocusBorderSettings) -> NSWindow? {
