@@ -68,12 +68,12 @@ struct StatusBarComponent: View {
                 HStack(spacing: 16) {
                     // Enter hint
                     HStack(spacing: 6) {
-                        Text("↵")
-                            .font(.system(size: 12, design: .monospaced))
-                            .foregroundColor(Color(hex: "#3B86F7"))
                         Text("Open")
                             .font(.system(size: 12))
                             .foregroundColor(.white.opacity(0.4))
+                        Text("↵")
+                            .font(.system(size: 12, design: .monospaced))
+                            .foregroundColor(Color(hex: "#3B86F7"))
                     }
                     
                     // Divider

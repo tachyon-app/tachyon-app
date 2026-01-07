@@ -115,46 +115,7 @@ struct SearchBarView: View {
                     .transition(.move(edge: .top).combined(with: .opacity))
                     .animation(.easeOut(duration: 0.2), value: viewModel.results.count)
                     
-                    // Footer with keyboard hints
-                    HStack(spacing: 20) {
-                        HStack(spacing: 6) {
-                            Text("↵")
-                                .font(.system(size: 12, design: .monospaced))
-                                .foregroundColor(Color(hex: "#3B86F7"))
-                            Text("Open")
-                                .font(.system(size: 12))
-                                .foregroundColor(Color.white.opacity(0.4))
-                        }
-                        
-                        HStack(spacing: 6) {
-                            Text("⌘,")
-                                .font(.system(size: 12, design: .monospaced))
-                                .foregroundColor(Color(hex: "#3B86F7"))
-                            Text("Settings")
-                                .font(.system(size: 12))
-                                .foregroundColor(Color.white.opacity(0.4))
-                        }
-                        
-                        HStack(spacing: 6) {
-                            Text("⎋")
-                                .font(.system(size: 12, design: .monospaced))
-                                .foregroundColor(Color(hex: "#3B86F7"))
-                            Text("Close")
-                                .font(.system(size: 12))
-                                .foregroundColor(Color.white.opacity(0.4))
-                        }
-                        
-                        Spacer()
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
-                    .background(Color.black.opacity(0.2))
-                    .overlay(
-                        Rectangle()
-                            .fill(Color.white.opacity(0.08))
-                            .frame(height: 1),
-                        alignment: .top
-                    )
+                    
                 }
                 
                 // Persistent status bar at bottom (Raycast-style)

@@ -8,7 +8,8 @@
     ┌───────────────────────┼───────────────────────┐
     │                       │                       │
     │  🎯 DO FIRST          │  📋 PLAN CAREFULLY    │
-    │                       │                       │
+    │                       │  • Window Switcher    │
+    │                       │    (Alt-Tab style)    │
     │  • Calculator         │  • Clipboard History  │
     │  • System Commands    │  • File Search        │
     │  • Emoji Picker       │  • Snippets           │
