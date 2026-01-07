@@ -88,4 +88,4 @@ EFFORT                      │                       EFFORT
 
 ---
 
-**Currently Implemented ✅**: App Launcher • Fuzzy Search • Custom Links • Search Engines • Script Runner • Window Snapping • Global Hotkeys
+**Currently Implemented ✅**: App Launcher • Fuzzy Search • Custom Links • Search Engines • Script Runner • Window Snapping • Global Hotkeys • Clipboard History
