@@ -20,10 +20,7 @@ let package = Package(
         .executableTarget(
             name: "Tachyon",
             dependencies: ["TachyonCore"],
-            path: "Sources/Tachyon/App",
-            resources: [
-                .process("../../Resources")
-            ]
+            path: "Sources/Tachyon/App"
         ),
         
         // Core library with all business logic
@@ -33,7 +30,10 @@ let package = Package(
                 .product(name: "GRDB", package: "GRDB.swift")
             ],
             path: "Sources/Tachyon",
-            exclude: ["App"]
+            exclude: ["App"],
+            resources: [
+                .process("Resources")
+            ]
         ),
         
         // Tests

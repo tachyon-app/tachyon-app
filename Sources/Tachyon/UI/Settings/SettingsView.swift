@@ -154,7 +154,7 @@ struct GeneralSettingsView: View {
                 VStack(alignment: .leading, spacing: 28) {
                     // Header with logo
                     VStack(alignment: .leading, spacing: 7) {
-                        if let logoImage = NSImage(contentsOfFile: "/Users/pablo/code/flashcast/Resources/Logo.png") {
+                        if let logoImage = TachyonAssets.logo {
                             Image(nsImage: logoImage)
                                 .resizable()
                                 .aspectRatio(contentMode: .fit)

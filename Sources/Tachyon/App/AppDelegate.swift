@@ -106,7 +106,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         
         if let button = statusItem?.button {
             // Use custom logo icon
-            if let logoImage = NSImage(contentsOfFile: "/Users/pablo/code/flashcast/Resources/icon.png") {
+            if let logoImage = TachyonAssets.icon {
                 logoImage.size = NSSize(width: 18, height: 18)
                 logoImage.isTemplate = true // Makes it adapt to menu bar theme
                 button.image = logoImage
