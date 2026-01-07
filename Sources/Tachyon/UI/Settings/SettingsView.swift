@@ -7,6 +7,7 @@ public struct SettingsView: View {
   /// Settings tabs
 enum SettingsTab: String, CaseIterable, Identifiable {
     case general = "General"
+    case clipboard = "Clipboard"
     case sources = "Sources"
     case scriptCommands = "Script Commands"
     case windowSnapping = "Window Snapping"
@@ -18,6 +19,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
     var icon: String {
         switch self {
         case .general: return "gearshape"
+        case .clipboard: return "doc.on.clipboard"
         case .sources: return "square.grid.2x2"
         case .scriptCommands: return "terminal"
         case .windowSnapping: return "rectangle.split.3x3"
@@ -72,6 +74,8 @@ enum SettingsTab: String, CaseIterable, Identifiable {
                     switch selectedTab {
                     case .general:
                         GeneralSettingsView()
+                    case .clipboard:
+                        ClipboardHistorySettingsView()
                     case .sources:
                         SourcesSettingsView()
                     case .scriptCommands:

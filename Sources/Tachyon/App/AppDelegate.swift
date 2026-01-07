@@ -18,6 +18,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private var windowSnapperService: WindowSnapperService?
     private var windowSnapperHotkeyIDs: [UUID] = []
     
+    // Clipboard history
+    private var clipboardHistoryHotkeyID: UUID?
+    
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Hide dock icon - we're a menu bar app
         NSApp.setActivationPolicy(.accessory)
@@ -47,12 +50,34 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             object: nil
         )
         
+        // Listen for window snapping recording events
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(reloadWindowSnappingHotkeys),
             name: .windowSnappingRecordingEnded,
             object: nil
         )
+        
+        // Listen for OpenClipboardHistory notification (from plugin)
+        NotificationCenter.default.addObserver(
+            forName: NSNotification.Name("OpenClipboardHistory"),
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            // Close main search bar
+            self?.searchBarWindow?.hide()
+            // Open with searchBar source so Escape takes us back
+            ClipboardHistoryWindowController.shared.show(source: .searchBar)
+        }
+        
+        // Listen for ShowSearchBar notification (return from Clipboard History)
+        NotificationCenter.default.addObserver(
+            forName: NSNotification.Name("ShowSearchBar"),
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.toggleSearchBar()
+        }
         
         // Create search bar window (hidden initially)
         searchBarWindow = SearchBarWindow()
@@ -61,12 +86,17 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         searchBarWindow?.onOpenSettings = { [weak self] in
             self?.openSettings()
         }
+        
+        // Initialize clipboard history
+        setupClipboardHistory()
     }
     
     func applicationWillTerminate(_ notification: Notification) {
         // Cleanup
         unregisterGlobalHotkey()
         unregisterWindowSnappingHotkeys()
+        unregisterClipboardHistoryHotkey()
+        ClipboardHistoryManager.shared.stopMonitoring()
     }
     
     // MARK: - Menu Bar
@@ -88,6 +118,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         
         let menu = NSMenu()
         menu.addItem(NSMenuItem(title: "Show Tachyon", action: #selector(toggleSearchBar), keyEquivalent: ""))
+        menu.addItem(NSMenuItem(title: "Clipboard History", action: #selector(toggleClipboardHistory), keyEquivalent: ""))
         menu.addItem(NSMenuItem.separator())
         menu.addItem(NSMenuItem(title: "Settings...", action: #selector(openSettingsMenu), keyEquivalent: ","))
         menu.addItem(NSMenuItem.separator())
@@ -142,11 +173,67 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     // MARK: - Actions
     
     @objc func toggleSearchBar() {
+        // Close clipboard history if sensitive
+        ClipboardHistoryWindowController.shared.hide()
         searchBarWindow?.toggle()
+    }
+    
+    @objc func toggleClipboardHistory() {
+        // Close main search bar
+        searchBarWindow?.hide()
+        ClipboardHistoryWindowController.shared.toggle()
     }
     
     @objc func openSettingsMenu() {
         openSettings()
+    }
+    
+    // MARK: - Clipboard History
+    
+    private func setupClipboardHistory() {
+        // Initialize manager with database
+        guard let dbQueue = StorageManager.shared.dbQueue else {
+            print("❌ Database not available for clipboard history")
+            return
+        }
+        
+        Task { @MainActor in
+            ClipboardHistoryManager.shared.initialize(dbQueue: dbQueue)
+            
+            // Start monitoring if enabled (default to true)
+            let isEnabled = UserDefaults.standard.object(forKey: "clipboardHistoryEnabled") as? Bool ?? true
+            if isEnabled {
+                ClipboardHistoryManager.shared.startMonitoring()
+            }
+        }
+        
+        // Register hotkey (Cmd+Shift+V)
+        registerClipboardHistoryHotkey()
+        
+        print("✅ Clipboard history initialized")
+    }
+    
+    private func registerClipboardHistoryHotkey() {
+        // V key code is 9, modifiers: Cmd + Shift
+        let keyCode: UInt32 = 9
+        let modifiers: UInt32 = UInt32(cmdKey | shiftKey)
+        
+        clipboardHistoryHotkeyID = HotkeyManager.shared.register(
+            keyCode: keyCode,
+            modifiers: modifiers,
+            handler: { [weak self] in
+                self?.toggleClipboardHistory()
+            }
+        )
+        
+        print("✅ Registered clipboard history hotkey (Cmd+Shift+V)")
+    }
+    
+    private func unregisterClipboardHistoryHotkey() {
+        if let id = clipboardHistoryHotkeyID {
+            HotkeyManager.shared.unregister(id)
+            clipboardHistoryHotkeyID = nil
+        }
     }
     
     public func openSettings() {

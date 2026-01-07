@@ -108,6 +108,18 @@ public class StorageManager {
             }
         }
         
+        migrator.registerMigration("v6") { db in
+            // Create clipboard history table
+            try ClipboardItem.createTable(in: db)
+        }
+        
+        migrator.registerMigration("v7") { db in
+            // Add columns for URL metadata
+            try db.alter(table: "clipboard_items") { t in
+                t.add(column: "urlTitle", .text)
+            }
+        }
+        
         return migrator
     }
     

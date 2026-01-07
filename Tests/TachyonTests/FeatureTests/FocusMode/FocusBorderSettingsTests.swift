@@ -11,17 +11,19 @@ final class FocusBorderSettingsTests: XCTestCase {
         
         XCTAssertFalse(settings.isEnabled)
         XCTAssertEqual(settings.thickness, .medium)
+        XCTAssertEqual(settings.color, .blue)
     }
     
     func testCustomValues() {
         let settings = FocusBorderSettings(
             isEnabled: true,
-            colorHex: "#FF5733",
+            color: .orange,
             thickness: .thick
         )
         
         XCTAssertTrue(settings.isEnabled)
-        XCTAssertEqual(settings.colorHex, "#FF5733")
+        XCTAssertEqual(settings.color, .orange)
+        XCTAssertEqual(settings.colorHex, "#FF9500")
         XCTAssertEqual(settings.thickness, .thick)
     }
     
@@ -47,7 +49,7 @@ final class FocusBorderSettingsTests: XCTestCase {
     func testEncodeDecode() throws {
         let settings = FocusBorderSettings(
             isEnabled: true,
-            colorHex: "#00FF00",
+            color: .green,
             thickness: .thin
         )
         
@@ -55,7 +57,7 @@ final class FocusBorderSettingsTests: XCTestCase {
         let decoded = try JSONDecoder().decode(FocusBorderSettings.self, from: encoded)
         
         XCTAssertEqual(decoded.isEnabled, settings.isEnabled)
-        XCTAssertEqual(decoded.colorHex, settings.colorHex)
+        XCTAssertEqual(decoded.color, settings.color)
         XCTAssertEqual(decoded.thickness, settings.thickness)
     }
 }

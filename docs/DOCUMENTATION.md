@@ -15,6 +15,7 @@ Welcome to the complete Tachyon documentation. This guide covers all features an
 8. [Search Engines](#search-engines)
 9. [Script Commands](#script-commands)
 10. [Settings](#settings)
+11. [Clipboard History](#clipboard-history)
 
 ---
 
@@ -525,3 +526,21 @@ Access settings via `Cmd + ,` or by searching for "Settings".
 ### Data Management
 - **Clear History**: Reset clipboard/command data.
 - **Permissions**: Verify Accessibility status.
+
+---
+
+## Clipboard History
+
+Tachyon includes a robust clipboard manager to capture, search, and recall your copy history.
+
+### Features
+- **Automatic Capture**: Text, Code, Images, and Files.
+- **Searchable**: Fuzzy search and OCR for text within images.
+- **Privacy**: Local storage and sensitive data filtering.
+- **Keyboard First**: Optimized for fast navigation and pasting.
+
+### Quick Start
+- **Hotkey**: `Cmd + Shift + V`
+- **Search**: Type "clipboard" in the main search bar.
+
+[View Full Documentation](CLIPBOARD_HISTORY.md)

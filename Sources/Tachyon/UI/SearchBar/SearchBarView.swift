@@ -312,6 +312,11 @@ class SearchBarViewModel: ObservableObject {
         queryEngine.register(plugin: focusPlugin)
         print("✅ FocusModePlugin registered")
         
+        print("🔌 Registering ClipboardHistoryPlugin...")
+        let clipboardPlugin = ClipboardHistoryPlugin()
+        queryEngine.register(plugin: clipboardPlugin)
+        print("✅ ClipboardHistoryPlugin registered")
+        
         // Listen for status bar updates
         NotificationCenter.default.addObserver(
             forName: NSNotification.Name("UpdateStatusBar"),
