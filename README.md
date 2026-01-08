@@ -2,6 +2,12 @@
 
 A blazing-fast productivity launcher for macOS, built natively in Swift.
 
+## Installation
+1. Clone this repository.
+2. Execute `make install`. This will bundle the app and move it to the Applications directory.
+3. Launch the app `/Applications/Tachyon.app` and grant **Accessibility** permissions in System Settings to enable global shortcuts and window management.
+
+
 ## Features
 
 - **App Launcher** - Launch applications with fuzzy search
@@ -148,8 +154,8 @@ See `Tests/TachyonTests/` for examples.
 - [x] Date & time calculations
 - [x] System commands
 - [x] Script runner (Raycast-compatible)
-- [ ] Clipboard history
-- [ ] Focus mode
+- [x] Clipboard history
+- [x] Focus mode
 
 ### Phase 4: Polish
 - [ ] Performance optimization
