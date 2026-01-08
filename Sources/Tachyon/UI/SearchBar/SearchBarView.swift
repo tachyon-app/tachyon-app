@@ -34,123 +34,125 @@ struct SearchBarView: View {
         } else if let link = viewModel.showingLinkForm {
         } else {
             // Show normal search interface with premium dark design
+            // Use fixed height container with top alignment to avoid window resize jitter
             VStack(spacing: 0) {
-                // Search input area
-                HStack(spacing: 12) {
-                    if viewModel.isCollectingArguments {
-                        // Inline argument collection mode (Raycast-style)
-                        if let context = viewModel.inlineArgumentContext {
-                            LockedItemChip(
-                                title: context.title,
-                                icon: context.icon,
-                                iconData: context.iconData
-                            )
-                        }
-                        
-                        ForEach(Array(viewModel.inlineArguments.enumerated()), id: \.element.id) { index, argument in
-                            InlineArgumentChip(
-                                argument: argument,
-                                value: Binding(
-                                    get: { viewModel.inlineArgumentValues[argument.id] ?? "" },
-                                    set: { viewModel.inlineArgumentValues[argument.id] = $0 }
-                                ),
-                                isFocused: viewModel.focusedArgumentIndex == index,
-                                onTab: { viewModel.focusNextArgument() },
-                                onSubmit: {
-                                    if viewModel.canExecuteWithArguments {
-                                        viewModel.executeWithInlineArguments()
-                                    } else {
-                                        viewModel.focusNextArgument()
+                // Content container with background and rounded corners
+                VStack(spacing: 0) {
+                    // Search input area
+                    HStack(spacing: 12) {
+                        if viewModel.isCollectingArguments {
+                            // Inline argument collection mode (Raycast-style)
+                            if let context = viewModel.inlineArgumentContext {
+                                LockedItemChip(
+                                    title: context.title,
+                                    icon: context.icon,
+                                    iconData: context.iconData
+                                )
+                            }
+                            
+                            ForEach(Array(viewModel.inlineArguments.enumerated()), id: \.element.id) { index, argument in
+                                InlineArgumentChip(
+                                    argument: argument,
+                                    value: Binding(
+                                        get: { viewModel.inlineArgumentValues[argument.id] ?? "" },
+                                        set: { viewModel.inlineArgumentValues[argument.id] = $0 }
+                                    ),
+                                    isFocused: viewModel.focusedArgumentIndex == index,
+                                    onTab: { viewModel.focusNextArgument() },
+                                    onSubmit: {
+                                        if viewModel.canExecuteWithArguments {
+                                            viewModel.executeWithInlineArguments()
+                                        } else {
+                                            viewModel.focusNextArgument()
+                                        }
                                     }
+                                )
+                            }
+                            
+                            Spacer()
+                        } else {
+                            // Normal search mode
+                            Image(systemName: "magnifyingglass")
+                                .font(.system(size: 18, weight: .medium))
+                                .foregroundColor(Color(hex: "#3B86F7"))
+                            
+                            TextField("Search for apps and commands...", text: $viewModel.query)
+                                .textFieldStyle(.plain)
+                                .font(.system(size: 20, weight: .regular, design: .default))
+                                .foregroundColor(.white)
+                                .focused($isSearchFocused)
+                                .onSubmit {
+                                    viewModel.executeSelectedResult()
                                 }
-                            )
-                        }
-                        
-                        Spacer()
-                    } else {
-                        // Normal search mode
-                        Image(systemName: "magnifyingglass")
-                            .font(.system(size: 18, weight: .medium))
-                            .foregroundColor(Color(hex: "#3B86F7"))
-                        
-                        TextField("Search for apps and commands...", text: $viewModel.query)
-                            .textFieldStyle(.plain)
-                            .font(.system(size: 20, weight: .regular, design: .default))
-                            .foregroundColor(.white)
-                            .focused($isSearchFocused)
-                            .onSubmit {
-                                viewModel.executeSelectedResult()
+                            
+                            if !viewModel.query.isEmpty {
+                                Button(action: { viewModel.query = "" }) {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .font(.system(size: 16))
+                                        .foregroundColor(Color.white.opacity(0.4))
+                                }
+                                .buttonStyle(.plain)
                             }
-                        
-                        if !viewModel.query.isEmpty {
-                            Button(action: { viewModel.query = "" }) {
-                                Image(systemName: "xmark.circle.fill")
-                                    .font(.system(size: 16))
-                                    .foregroundColor(Color.white.opacity(0.4))
-                            }
-                            .buttonStyle(.plain)
                         }
                     }
-                }
-                .padding(.horizontal, 20)
-                .padding(.vertical, 18)
-                
-                // Divider
-                Rectangle()
-                    .fill(Color.white.opacity(0.08))
-                    .frame(height: 1)
-                
-                // Results list
-                if !viewModel.results.isEmpty {
-                    ResultsListView(
-                        results: viewModel.results,
-                        selectedIndex: viewModel.selectedIndex,
-                        onSelect: { index in
-                            viewModel.selectedIndex = index
-                        },
-                        onExecute: { result in
-                            viewModel.execute(result: result)
-                        }
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 18)
+                    
+                    // Divider
+                    Rectangle()
+                        .fill(Color.white.opacity(0.08))
+                        .frame(height: 1)
+                    
+                    // Results list
+                    if !viewModel.results.isEmpty {
+                        ResultsListView(
+                            results: viewModel.results,
+                            selectedIndex: viewModel.selectedIndex,
+                            onSelect: { index in
+                                viewModel.selectedIndex = index
+                            },
+                            onExecute: { result in
+                                viewModel.execute(result: result)
+                            }
+                        )
+                    }
+                    
+                    // Persistent status bar at bottom (Raycast-style)
+                    StatusBarComponent(
+                        state: viewModel.statusBarState,
+                        showActionButtons: !viewModel.results.isEmpty
                     )
-                    .transition(.move(edge: .top).combined(with: .opacity))
-                    .animation(.easeOut(duration: 0.2), value: viewModel.results.count)
-                    
-                    
                 }
-                
-                // Persistent status bar at bottom (Raycast-style)
-                StatusBarComponent(
-                    state: viewModel.statusBarState,
-                    showActionButtons: !viewModel.results.isEmpty
+                .background(
+                    ZStack {
+                        // Dark gradient background
+                        LinearGradient(
+                            colors: [
+                                Color(hex: "#1a1a1a"),
+                                Color(hex: "#1f1f1f")
+                            ],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                        
+                        // Subtle blue glow at top
+                        RadialGradient(
+                            colors: [
+                                Color(hex: "#3B86F7").opacity(0.05),
+                                Color.clear
+                            ],
+                            center: .top,
+                            startRadius: 0,
+                            endRadius: 300
+                        )
+                    }
                 )
-            }
-            .frame(width: 680)
-            .background(
-                ZStack {
-                    // Dark gradient background
-                    LinearGradient(
-                        colors: [
-                            Color(hex: "#1a1a1a"),
-                            Color(hex: "#1f1f1f")
-                        ],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                    
-                    // Subtle blue glow at top
-                    RadialGradient(
-                        colors: [
-                            Color(hex: "#3B86F7").opacity(0.05),
-                            Color.clear
-                        ],
-                        center: .top,
-                        startRadius: 0,
-                        endRadius: 300
-                    )
-                }
                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-            )
-            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                
+                // Push content to top
+                Spacer(minLength: 0)
+            }
+            .frame(width: 680, height: 560) // Fixed height window - content aligns to top
             .onAppear {
                 isSearchFocused = true
             }
@@ -168,9 +170,6 @@ struct SearchBarView: View {
                     // Only close window when at main search screen
                     viewModel.onHideWindow?()
                 }
-            }
-            .onHeightChange { height in
-                viewModel.onHeightChanged?(height)
             }
         }
     }

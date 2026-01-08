@@ -24,7 +24,7 @@ public class SearchBarWindow: NSWindow {
         
         // Window configuration
         super.init(
-            contentRect: NSRect(x: 0, y: 0, width: 680, height: 500),
+            contentRect: NSRect(x: 0, y: 0, width: 680, height: 560),
             styleMask: [.borderless, .nonactivatingPanel],
             backing: .buffered,
             defer: false
@@ -51,31 +51,8 @@ public class SearchBarWindow: NSWindow {
             self?.hide()
         }
         
-        // Connect height callback
-        // Connect height callback
-        viewModel.onHeightChanged = { [weak self] height in
-            // animate frame change
-            guard let self = self else { return }
-            
-            let newHeight = max(height, 80) // Minimum height for search bar
-            let currentFrame = self.frame
-            
-            // Calculate new origin to keep top anchored
-            let heightDiff = newHeight - currentFrame.height
-            let newY = currentFrame.origin.y - heightDiff
-            
-            let newFrame = NSRect(
-                x: currentFrame.origin.x,
-                y: newY,
-                width: currentFrame.width,
-                height: newHeight
-            )
-            
-            // Only animate if the change is significant
-            if abs(heightDiff) > 1 {
-                self.animator().setFrame(newFrame, display: true)
-            }
-        }
+        // Note: Using fixed height approach - no dynamic resize needed
+        // This eliminates animation jitter between AppKit window and SwiftUI content
         
         // Monitor for Escape key and Cmd+,
         localEventMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
