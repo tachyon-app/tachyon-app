@@ -146,6 +146,8 @@ struct TabButton: View {
 
 /// General settings view with dark theme
 struct GeneralSettingsView: View {
+    @StateObject private var launchAtLoginService = LaunchAtLoginService.shared
+    
     var body: some View {
         ScrollView {
             HStack {
@@ -169,6 +171,24 @@ struct GeneralSettingsView: View {
                             .font(.system(size: 13))
                             .foregroundColor(Color.white.opacity(0.55))
                     }
+                    
+                    // Startup Section
+                    SettingsSection(title: "Startup") {
+                        SettingsRow(label: "Launch at Login") {
+                            Toggle("", isOn: $launchAtLoginService.isEnabled)
+                                .toggleStyle(.switch)
+                                .labelsHidden()
+                                .tint(Color(hex: "#3B86F7"))
+                        }
+                        
+                        Text("Automatically start Tachyon when you log in to your Mac.")
+                            .font(.system(size: 11))
+                            .foregroundColor(Color.white.opacity(0.4))
+                            .padding(.top, 6)
+                    }
+                    
+                    Divider()
+                        .background(Color.white.opacity(0.06))
                     
                     // Global Hotkey Section
                     SettingsSection(title: "Global Hotkey") {
