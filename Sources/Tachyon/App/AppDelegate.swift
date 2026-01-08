@@ -22,6 +22,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private var clipboardHistoryHotkeyID: UUID?
     
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // Singleton check - ensure only one instance is running
+        if let existingInstance = findExistingInstance() {
+            handleExistingInstance(existingInstance)
+            return
+        }
+        
         // Hide dock icon - we're a menu bar app
         NSApp.setActivationPolicy(.accessory)
         
@@ -403,6 +409,48 @@ class SettingsWindow: NSWindow {
         } else {
             super.keyDown(with: event)
         }
+    }
+}
+
+// MARK: - Singleton Support
+
+extension AppDelegate {
+    /// Find an existing running instance of this application
+    fileprivate func findExistingInstance() -> NSRunningApplication? {
+        guard let bundleIdentifier = Bundle.main.bundleIdentifier else {
+            return nil
+        }
+        
+        let runningApps = NSRunningApplication.runningApplications(withBundleIdentifier: bundleIdentifier)
+        
+        // Find another instance that isn't this one
+        for app in runningApps {
+            if app.processIdentifier != ProcessInfo.processInfo.processIdentifier {
+                return app
+            }
+        }
+        
+        return nil
+    }
+    
+    /// Handle the case when another instance is already running
+    fileprivate func handleExistingInstance(_ existingApp: NSRunningApplication) {
+        print("⚠️ Another instance of Tachyon is already running (PID: \(existingApp.processIdentifier))")
+        
+        // Activate the existing instance
+        existingApp.activate(options: [.activateIgnoringOtherApps])
+        
+        // Show alert to user
+        let alert = NSAlert()
+        alert.messageText = "Tachyon is Already Running"
+        alert.informativeText = "Another instance of Tachyon is already running. The existing instance has been brought to the foreground."
+        alert.alertStyle = .informational
+        alert.addButton(withTitle: "OK")
+        alert.runModal()
+        
+        // Terminate this instance
+        print("🛑 Terminating duplicate instance")
+        NSApp.terminate(nil)
     }
 }
 
