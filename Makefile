@@ -24,8 +24,9 @@ bundle: build
 	@cp -R $(RELEASE_DIR)/*.bundle $(APP_BUNDLE)/Contents/Resources/ 2>/dev/null || true
 	@cp Resources/Info.plist $(APP_BUNDLE)/Contents/Info.plist
 	@rm -f $(APP_BUNDLE)/Contents/Resources/Info.plist
-	@# Ad-hoc signing to run locally
-	@codesign --force --deep --sign - $(APP_BUNDLE)
+	@# Sign with development certificate for persistent identity
+	@# This allows macOS to remember accessibility permissions across rebuilds
+	@codesign --force --deep --sign "Apple Development" $(APP_BUNDLE)
 	@echo "✅ App bundle created at $(APP_BUNDLE)"
 
 dmg: bundle
