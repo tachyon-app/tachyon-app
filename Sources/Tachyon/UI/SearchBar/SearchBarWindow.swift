@@ -35,6 +35,7 @@ public class SearchBarWindow: NSWindow {
         self.backgroundColor = NSColor.clear
         self.isOpaque = false
         self.hasShadow = true
+        self.isMovableByWindowBackground = true  // Allow dragging the window by its background
         self.contentView = hostingView
         self.contentView?.wantsLayer = true
         self.contentView?.layer?.backgroundColor = CGColor.clear
