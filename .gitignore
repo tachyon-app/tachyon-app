@@ -41,3 +41,14 @@ website/src/components/v2/Sections/Hero.tsx
 website/src/components/v2/Sections/Navbar.tsx
 website/src/components/v2/UI/Atoms.tsx
 website/src/components/v2/UI/TachyonSearchMock.tsx
+Tachyon.app/Contents/Info.plist
+Tachyon.app/Contents/MacOS/Tachyon
+Tachyon.app/Contents/Resources/icon.png
+Tachyon.app/Contents/Resources/Logo.png
+Tachyon.app/Contents/Resources/GRDB_GRDB.bundle/Contents/Info.plist
+Tachyon.app/Contents/Resources/GRDB_GRDB.bundle/Contents/Resources/PrivacyInfo.xcprivacy
+Tachyon.app/Contents/Resources/Tachyon_TachyonCore.bundle/Contents/Info.plist
+Tachyon.app/Contents/Resources/Tachyon_TachyonCore.bundle/Contents/Resources/icon.png
+Tachyon.app/Contents/Resources/Tachyon_TachyonCore.bundle/Contents/Resources/Logo.png
+Tachyon.app/Contents/_CodeSignature/CodeResources
+Tachyon.dmg
