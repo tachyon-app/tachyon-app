@@ -26,7 +26,8 @@ bundle: build
 	@rm -f $(APP_BUNDLE)/Contents/Resources/Info.plist
 	@# Sign with development certificate for persistent identity
 	@# This allows macOS to remember accessibility permissions across rebuilds
-	@codesign --force --deep --sign "Apple Development" $(APP_BUNDLE)
+	@# Falls back to ad-hoc signing if development certificate is not available
+	@codesign --force --deep --sign "Apple Development" $(APP_BUNDLE) || codesign --force --deep --sign "-" $(APP_BUNDLE)
 	@echo "✅ App bundle created at $(APP_BUNDLE)"
 
 dmg: bundle
@@ -37,10 +38,21 @@ dmg: bundle
 
 install: dmg
 	@echo "🚀 Installing to /Applications..."
+	@# Reset accessibility permissions to avoid stale entries when signature changes
+	@# This requires the bundle identifier from Info.plist
+	@tccutil reset Accessibility com.fluentiq.tachyon 2>/dev/null || true
 	@rm -rf /Applications/$(APP_BUNDLE)
 	@cp -R $(APP_BUNDLE) /Applications/
 	@echo "✅ Installed $(APP_NAME) to /Applications"
-	@echo "   (You may need to grant permissions on first run)"
+	@echo ""
+	@# Check if we used ad-hoc signing (which means permissions need to be re-granted)
+	@if codesign -dv /Applications/$(APP_BUNDLE) 2>&1 | grep -q "adhoc"; then \
+		echo "⚠️  Ad-hoc signed (no developer certificate found)"; \
+		echo "   You will need to grant Accessibility permissions on first run."; \
+		echo "   Go to: System Settings → Privacy & Security → Accessibility"; \
+	else \
+		echo "✅ Signed with developer certificate - permissions should persist"; \
+	fi
 
 clean:
 	@echo "🧹 Cleaning..."
