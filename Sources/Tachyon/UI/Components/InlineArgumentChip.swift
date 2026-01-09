@@ -41,11 +41,21 @@ struct InlineArgumentChip: View {
                 )
         )
         .onChange(of: isFocused) { newValue in
-            textFieldFocused = newValue
+            // Use async to ensure focus change happens after view update
+            if newValue {
+                DispatchQueue.main.async {
+                    textFieldFocused = true
+                }
+            } else {
+                textFieldFocused = false
+            }
         }
         .onAppear {
             if isFocused {
-                textFieldFocused = true
+                // Slight delay to ensure view is fully rendered
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                    textFieldFocused = true
+                }
             }
         }
     }

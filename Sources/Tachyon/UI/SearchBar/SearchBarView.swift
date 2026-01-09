@@ -156,6 +156,12 @@ struct SearchBarView: View {
             .onAppear {
                 isSearchFocused = true
             }
+            .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("FocusSearchBar"))) { _ in
+                // Use async to ensure the view is fully visible before focusing
+                DispatchQueue.main.async {
+                    isSearchFocused = true
+                }
+            }
             .onExitCommand {
                 // Escape acts as "go back" - exit current mode or close window
                 if viewModel.isCollectingArguments {
@@ -557,6 +563,14 @@ class SearchBarViewModel: ObservableObject {
         for arg in args {
             inlineArgumentValues[arg.id] = ""
         }
+        print("📝 Entered inline argument mode for link '\(link.name)' with \(args.count) parameters")
+        
+        // Reset focus after a brief delay to ensure view is rendered
+        focusedArgumentIndex = -1  // Temporarily set to invalid
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 50_000_000) // 50ms
+            focusedArgumentIndex = 0  // Now trigger focus on first argument
+        }
     }
     
     /// Exit inline argument collection mode (cancel)
@@ -565,6 +579,12 @@ class SearchBarViewModel: ObservableObject {
         inlineArguments = []
         inlineArgumentValues = [:]
         focusedArgumentIndex = 0
+        
+        // Focus back on the search bar after a brief delay
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 50_000_000) // 50ms
+            NotificationCenter.default.post(name: NSNotification.Name("FocusSearchBar"), object: nil)
+        }
     }
     
     /// Move to next argument (Tab key)

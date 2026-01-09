@@ -146,8 +146,11 @@ public class SearchBarWindow: NSWindow {
         self.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
         
-        // Focus the search field
-        searchBarView.focusSearchField()
+        // Focus the search field via notification after a short delay
+        // This ensures the window is fully visible and SwiftUI view is ready
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+            NotificationCenter.default.post(name: NSNotification.Name("FocusSearchBar"), object: nil)
+        }
     }
     
     /// Hide the search bar
