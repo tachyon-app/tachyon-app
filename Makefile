@@ -38,9 +38,12 @@ dmg: bundle
 
 install: dmg
 	@echo "🚀 Installing to /Applications..."
+	@# Kill any running instance of Tachyon
+	@pkill -x $(APP_NAME) 2>/dev/null || true
+	@sleep 0.5
 	@# Reset accessibility permissions to avoid stale entries when signature changes
 	@# This requires the bundle identifier from Info.plist
-	@tccutil reset Accessibility com.fluentiq.tachyon 2>/dev/null || true
+	@tccutil reset Accessibility com.tachyon.app 2>/dev/null || true
 	@rm -rf /Applications/$(APP_BUNDLE)
 	@cp -R $(APP_BUNDLE) /Applications/
 	@echo "✅ Installed $(APP_NAME) to /Applications"
@@ -53,6 +56,9 @@ install: dmg
 	else \
 		echo "✅ Signed with developer certificate - permissions should persist"; \
 	fi
+	@echo ""
+	@echo "🚀 Launching $(APP_NAME)..."
+	@open /Applications/$(APP_BUNDLE)
 
 clean:
 	@echo "🧹 Cleaning..."
