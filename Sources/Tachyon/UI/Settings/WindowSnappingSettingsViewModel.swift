@@ -41,11 +41,11 @@ class WindowSnappingSettingsViewModel: ObservableObject {
                 }
                 
                 quarters = shortcuts.filter { action in
-                    ["topLeftQuarter", "topRightQuarter", "bottomLeftQuarter", "bottomRightQuarter"].contains(action.action)
+                    ["cycleQuarters", "cycleThreeQuarters"].contains(action.action)
                 }
                 
                 thirds = shortcuts.filter { action in
-                    ["firstThird", "centerThird", "lastThird", "firstTwoThirds", "lastTwoThirds", "firstThreeQuarters", "lastThreeQuarters"].contains(action.action)
+                    ["cycleThirds", "cycleTwoThirds"].contains(action.action)
                 }
                 
                 multiMonitor = shortcuts.filter { action in
@@ -53,7 +53,7 @@ class WindowSnappingSettingsViewModel: ObservableObject {
                 }
                 
                 other = shortcuts.filter { action in
-                    ["maximize", "center"].contains(action.action)
+                    ["maximize", "fullscreen", "center"].contains(action.action)
                 }
                 
                 isLoading = false

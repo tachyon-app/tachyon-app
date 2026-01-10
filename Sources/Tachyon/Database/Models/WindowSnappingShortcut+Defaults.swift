@@ -20,9 +20,9 @@ extension WindowSnappingShortcut {
         // Cycle Two-Thirds
         .init(action: "cycleTwoThirds", keyCode: 17, modifiers: 6144, isEnabled: true),  // Ctrl+Opt+T
         
-        // Multi-Monitor
-        .init(action: "nextDisplay", keyCode: 124, modifiers: 6656, isEnabled: true),     // Ctrl+Opt+Cmd+→
-        .init(action: "previousDisplay", keyCode: 123, modifiers: 6656, isEnabled: true), // Ctrl+Opt+Cmd+←
+        // Multi-Monitor (Ctrl+Opt+Cmd = 4096 + 2048 + 256 = 6400)
+        .init(action: "nextDisplay", keyCode: 124, modifiers: 6400, isEnabled: true),     // Ctrl+Opt+Cmd+→
+        .init(action: "previousDisplay", keyCode: 123, modifiers: 6400, isEnabled: true), // Ctrl+Opt+Cmd+←
         
         // Maximize & Center
         .init(action: "maximize", keyCode: 36, modifiers: 6144, isEnabled: true),  // Ctrl+Opt+Enter

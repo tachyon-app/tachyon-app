@@ -120,6 +120,19 @@ public class StorageManager {
             }
         }
         
+        migrator.registerMigration("v8") { db in
+            // Fix multi-monitor shortcuts: modifiers were 6656 (Ctrl+Opt+Shift) 
+            // but should be 6400 (Ctrl+Opt+Cmd)
+            try db.execute(
+                sql: """
+                    UPDATE window_snapping_shortcuts 
+                    SET modifiers = 6400 
+                    WHERE action IN ('nextDisplay', 'previousDisplay') 
+                    AND modifiers = 6656
+                    """
+            )
+        }
+        
         return migrator
     }
     

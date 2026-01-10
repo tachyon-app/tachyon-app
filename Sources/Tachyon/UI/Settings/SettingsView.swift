@@ -248,6 +248,8 @@ struct GeneralSettingsView: View {
 
 /// Hotkeys settings view
 struct HotkeysSettingsView: View {
+    @StateObject private var windowSnappingViewModel = WindowSnappingSettingsViewModel()
+    
     var body: some View {
         ScrollView {
             HStack {
@@ -293,6 +295,20 @@ struct HotkeysSettingsView: View {
                             KeyboardShortcutView(keys: ["⎋"])
                         }
                     }
+                    
+                    Divider()
+                        .background(Color.white.opacity(0.1))
+                    
+                    // Window Snapping shortcuts
+                    if windowSnappingViewModel.isLoading {
+                        SettingsSection(title: "Window Snapping") {
+                            ProgressView()
+                                .progressViewStyle(.circular)
+                                .scaleEffect(0.8)
+                        }
+                    } else {
+                        windowSnappingSection
+                    }
                 }
                 .frame(maxWidth: 600)
                 
@@ -300,6 +316,147 @@ struct HotkeysSettingsView: View {
             }
             .padding(.vertical, 40)
         }
+        .onAppear {
+            windowSnappingViewModel.loadShortcuts()
+        }
+    }
+    
+    @ViewBuilder
+    private var windowSnappingSection: some View {
+        VStack(alignment: .leading, spacing: 24) {
+            // Section header with link to full settings
+            HStack {
+                Text("WINDOW SNAPPING")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundColor(Color.white.opacity(0.4))
+                    .tracking(0.6)
+                
+                Spacer()
+                
+                Text("Customize in Window Snapping tab")
+                    .font(.system(size: 11))
+                    .foregroundColor(Color(hex: "#3B86F7"))
+            }
+            
+            VStack(alignment: .leading, spacing: 16) {
+                // Halves
+                if !windowSnappingViewModel.halves.isEmpty {
+                    HotkeysShortcutGroup(
+                        title: "Halves",
+                        shortcuts: windowSnappingViewModel.halves
+                    )
+                }
+                
+                // Quarters
+                if !windowSnappingViewModel.quarters.isEmpty {
+                    HotkeysShortcutGroup(
+                        title: "Quarters",
+                        shortcuts: windowSnappingViewModel.quarters
+                    )
+                }
+                
+                // Thirds
+                if !windowSnappingViewModel.thirds.isEmpty {
+                    HotkeysShortcutGroup(
+                        title: "Thirds",
+                        shortcuts: windowSnappingViewModel.thirds
+                    )
+                }
+                
+                // Multi-Monitor
+                if !windowSnappingViewModel.multiMonitor.isEmpty {
+                    HotkeysShortcutGroup(
+                        title: "Multi-Monitor",
+                        shortcuts: windowSnappingViewModel.multiMonitor
+                    )
+                }
+                
+                // Other
+                if !windowSnappingViewModel.other.isEmpty {
+                    HotkeysShortcutGroup(
+                        title: "Other",
+                        shortcuts: windowSnappingViewModel.other
+                    )
+                }
+            }
+        }
+    }
+}
+
+/// Group of window snapping shortcuts for display in Hotkeys view
+struct HotkeysShortcutGroup: View {
+    let title: String
+    let shortcuts: [WindowSnappingShortcut]
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(Color.white.opacity(0.6))
+            
+            VStack(spacing: 6) {
+                ForEach(shortcuts.filter { $0.isEnabled }, id: \.id) { shortcut in
+                    HStack {
+                        Text(shortcut.displayName)
+                            .font(.system(size: 13))
+                            .foregroundColor(Color.white.opacity(0.85))
+                        
+                        Spacer()
+                        
+                        HotkeysShortcutBadge(shortcut: shortcut)
+                    }
+                    .padding(.vertical, 2)
+                }
+            }
+        }
+    }
+}
+
+/// Compact shortcut badge for Hotkeys view
+struct HotkeysShortcutBadge: View {
+    let shortcut: WindowSnappingShortcut
+    
+    var body: some View {
+        HStack(spacing: 3) {
+            // Modifier keys
+            if shortcut.modifiers & 4096 != 0 {  // controlKey
+                Text("⌃")
+                    .modifier(HotkeyKeyStyle())
+            }
+            if shortcut.modifiers & 2048 != 0 {  // optionKey
+                Text("⌥")
+                    .modifier(HotkeyKeyStyle())
+            }
+            if shortcut.modifiers & 256 != 0 {  // cmdKey
+                Text("⌘")
+                    .modifier(HotkeyKeyStyle())
+            }
+            if shortcut.modifiers & 512 != 0 {  // shiftKey
+                Text("⇧")
+                    .modifier(HotkeyKeyStyle())
+            }
+            
+            // Key
+            Text(KeyCodeMapper.symbol(for: shortcut.keyCode))
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(.white.opacity(0.75))
+                .padding(.horizontal, 7)
+                .padding(.vertical, 4)
+                .background(Color(hex: "#252525"))
+                .cornerRadius(4)
+        }
+    }
+}
+
+/// Shared style for hotkey modifier keys
+struct HotkeyKeyStyle: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .font(.system(size: 12, weight: .medium))
+            .foregroundColor(.white.opacity(0.6))
+            .frame(width: 20, height: 20)
+            .background(Color(hex: "#1e1e1e"))
+            .cornerRadius(3)
     }
 }
 
