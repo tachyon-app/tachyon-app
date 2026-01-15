@@ -11,16 +11,23 @@ public struct WindowGeometry {
     
     /// Determine which third position the window is in (1=first, 2=center, 3=last) or nil
     /// Uses proportional detection to work across different screen sizes
+    /// Also handles apps with minimum width constraints that can't shrink to target size
     public static func currentThirdPosition(frame: CGRect, visibleFrame: CGRect) -> Int? {
         let tolerance = proportionalTolerance
         
-        // Check proportional width (~33%)
-        let widthRatio = frame.width / visibleFrame.width
-        guard abs(widthRatio - 1.0/3.0) < tolerance else { return nil }
-        
-        // Check proportional height (~100%)
+        // Check proportional height (~100%) - this must still match
         let heightRatio = frame.height / visibleFrame.height
         guard abs(heightRatio - 1.0) < tolerance else { return nil }
+        
+        // Check proportional width (~33%)
+        let widthRatio = frame.width / visibleFrame.width
+        let widthMatches = abs(widthRatio - 1.0/3.0) < tolerance
+        
+        // Also accept if width is LARGER than expected (app has minimum width constraint)
+        // but still less than or equal to the target + extra tolerance
+        let widthConstrainedButClose = widthRatio >= 1.0/3.0 && widthRatio <= 0.5
+        
+        guard widthMatches || widthConstrainedButClose else { return nil }
         
         // Check proportional X position
         let xRatio = (frame.origin.x - visibleFrame.origin.x) / visibleFrame.width
@@ -32,17 +39,22 @@ public struct WindowGeometry {
     }
     
     /// Get target frame for nth third (1=first, 2=center, 3=last)
+    /// For the last position, we align by right edge so windows with min width constraints don't overflow
     public static func thirdFrame(position: Int, visibleFrame: CGRect) -> CGRect {
         let width = visibleFrame.width
         let x = visibleFrame.origin.x
         let y = visibleFrame.origin.y
         let height = visibleFrame.height
+        let targetWidth = width / 3
         
         switch position {
-        case 1: return CGRect(x: x, y: y, width: width / 3, height: height)
-        case 2: return CGRect(x: x + width / 3, y: y, width: width / 3, height: height)
-        case 3: return CGRect(x: x + width * 2 / 3, y: y, width: width / 3, height: height)
-        default: return CGRect(x: x, y: y, width: width / 3, height: height)
+        case 1: return CGRect(x: x, y: y, width: targetWidth, height: height)
+        case 2: return CGRect(x: x + width / 3, y: y, width: targetWidth, height: height)
+        case 3: 
+            // Align by right edge: x = screenRight - targetWidth
+            let rightEdge = x + width
+            return CGRect(x: rightEdge - targetWidth, y: y, width: targetWidth, height: height)
+        default: return CGRect(x: x, y: y, width: targetWidth, height: height)
         }
     }
     
@@ -87,16 +99,23 @@ public struct WindowGeometry {
     
     /// Determine which quarter position the window is in (1-4, vertical quarters) or nil
     /// Uses proportional detection to work across different screen sizes
+    /// Also handles apps with minimum width constraints that can't shrink to target size
     public static func currentQuarterPosition(frame: CGRect, visibleFrame: CGRect) -> Int? {
         let tolerance = proportionalTolerance
         
-        // Check proportional width (~25%)
-        let widthRatio = frame.width / visibleFrame.width
-        guard abs(widthRatio - 0.25) < tolerance else { return nil }
-        
-        // Check proportional height (~100%)
+        // Check proportional height (~100%) - this must still match
         let heightRatio = frame.height / visibleFrame.height
         guard abs(heightRatio - 1.0) < tolerance else { return nil }
+        
+        // Check proportional width (~25%)
+        let widthRatio = frame.width / visibleFrame.width
+        let widthMatches = abs(widthRatio - 0.25) < tolerance
+        
+        // Also accept if width is LARGER than expected (app has minimum width constraint)
+        // but still less than or equal to half the screen (otherwise it's clearly not a quarter)
+        let widthConstrainedButClose = widthRatio >= 0.25 && widthRatio <= 0.5
+        
+        guard widthMatches || widthConstrainedButClose else { return nil }
         
         // Check proportional X position
         let xRatio = (frame.origin.x - visibleFrame.origin.x) / visibleFrame.width
@@ -109,18 +128,23 @@ public struct WindowGeometry {
     }
     
     /// Get target frame for nth quarter (1-4, vertical quarters)
+    /// For the last position, we align by right edge so windows with min width constraints don't overflow
     public static func quarterFrame(position: Int, visibleFrame: CGRect) -> CGRect {
         let width = visibleFrame.width
         let height = visibleFrame.height
         let x = visibleFrame.origin.x
         let y = visibleFrame.origin.y
+        let targetWidth = width / 4
         
         switch position {
-        case 1: return CGRect(x: x, y: y, width: width / 4, height: height)  // First quarter
-        case 2: return CGRect(x: x + width / 4, y: y, width: width / 4, height: height)  // Second quarter
-        case 3: return CGRect(x: x + width / 2, y: y, width: width / 4, height: height)  // Third quarter
-        case 4: return CGRect(x: x + width * 3 / 4, y: y, width: width / 4, height: height)  // Fourth quarter
-        default: return CGRect(x: x, y: y, width: width / 4, height: height)
+        case 1: return CGRect(x: x, y: y, width: targetWidth, height: height)  // First quarter
+        case 2: return CGRect(x: x + width / 4, y: y, width: targetWidth, height: height)  // Second quarter
+        case 3: return CGRect(x: x + width / 2, y: y, width: targetWidth, height: height)  // Third quarter
+        case 4: 
+            // Align by right edge: x = screenRight - targetWidth
+            let rightEdge = x + width
+            return CGRect(x: rightEdge - targetWidth, y: y, width: targetWidth, height: height)  // Fourth quarter
+        default: return CGRect(x: x, y: y, width: targetWidth, height: height)
         }
     }
     

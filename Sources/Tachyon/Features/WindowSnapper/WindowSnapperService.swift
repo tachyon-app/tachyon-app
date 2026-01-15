@@ -108,8 +108,28 @@ public final class WindowSnapperService {
             }
         }
         
-        // Apply the new frame
+        // Apply the new frame (first pass - macOS may enforce minimum size constraints)
         try accessibility.setWindowFrame(windowElement, frame: targetFrame)
+        
+        // Second pass: check if window overflows screen bounds due to minimum size constraints
+        // (apps like Finder have minimum widths that may cause overflow)
+        let actualFrame = try accessibility.getWindowFrame(windowElement)
+        let screenRight = adjustedVisibleFrame.origin.x + adjustedVisibleFrame.width
+        let actualRight = actualFrame.origin.x + actualFrame.width
+        
+        if actualRight > screenRight + 5 {  // 5px tolerance
+            // Window extends past right edge, shift it left
+            let overflow = actualRight - screenRight
+            var correctedFrame = actualFrame
+            correctedFrame.origin.x -= overflow
+            
+            // Ensure we don't go past left edge
+            if correctedFrame.origin.x < adjustedVisibleFrame.origin.x {
+                correctedFrame.origin.x = adjustedVisibleFrame.origin.x
+            }
+            
+            try accessibility.setWindowFrame(windowElement, frame: correctedFrame)
+        }
     }
     
     /// Calculate target frame with traversal logic
