@@ -41,7 +41,8 @@ class WindowSnappingSettingsViewModel: ObservableObject {
                 }
                 
                 quarters = shortcuts.filter { action in
-                    ["cycleQuarters", "cycleThreeQuarters"].contains(action.action)
+                    ["topLeftQuarter", "topRightQuarter", "bottomLeftQuarter", "bottomRightQuarter",
+                     "cycleQuarters", "cycleThreeQuarters"].contains(action.action)
                 }
                 
                 thirds = shortcuts.filter { action in

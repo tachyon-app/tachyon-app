@@ -212,6 +212,19 @@ public struct WindowGeometry {
         case .bottomHalf:
             return CGRect(x: x, y: y + height / 2, width: width, height: height / 2)
             
+        // MARK: - Corner Quarters
+        case .topLeftQuarter:
+            return CGRect(x: x, y: y, width: width / 2, height: height / 2)
+            
+        case .topRightQuarter:
+            return CGRect(x: x + width / 2, y: y, width: width / 2, height: height / 2)
+            
+        case .bottomLeftQuarter:
+            return CGRect(x: x, y: y + height / 2, width: width / 2, height: height / 2)
+            
+        case .bottomRightQuarter:
+            return CGRect(x: x + width / 2, y: y + height / 2, width: width / 2, height: height / 2)
+            
         // MARK: - Cycle Actions (handled by WindowSnapperService)
         case .cycleQuarters, .cycleThreeQuarters, .cycleThirds, .cycleTwoThirds:
             return currentFrame  // Cycle logic handled elsewhere
@@ -281,6 +294,30 @@ public struct WindowGeometry {
         if abs(widthRatio - 1.0) < tolerance && abs(heightRatio - 0.5) < tolerance &&
            abs(yRatio - 0.5) < tolerance {
             return .bottomHalf
+        }
+        
+        // Check top left quarter (~50% width, ~50% height, at top-left)
+        if abs(widthRatio - 0.5) < tolerance && abs(heightRatio - 0.5) < tolerance &&
+           abs(xRatio) < tolerance && abs(yRatio) < tolerance {
+            return .topLeftQuarter
+        }
+        
+        // Check top right quarter (~50% width, ~50% height, at top-right)
+        if abs(widthRatio - 0.5) < tolerance && abs(heightRatio - 0.5) < tolerance &&
+           abs(xRatio - 0.5) < tolerance && abs(yRatio) < tolerance {
+            return .topRightQuarter
+        }
+        
+        // Check bottom left quarter (~50% width, ~50% height, at bottom-left)
+        if abs(widthRatio - 0.5) < tolerance && abs(heightRatio - 0.5) < tolerance &&
+           abs(xRatio) < tolerance && abs(yRatio - 0.5) < tolerance {
+            return .bottomLeftQuarter
+        }
+        
+        // Check bottom right quarter (~50% width, ~50% height, at bottom-right)
+        if abs(widthRatio - 0.5) < tolerance && abs(heightRatio - 0.5) < tolerance &&
+           abs(xRatio - 0.5) < tolerance && abs(yRatio - 0.5) < tolerance {
+            return .bottomRightQuarter
         }
         
         return nil

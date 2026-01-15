@@ -242,4 +242,84 @@ class WindowGeometryTests: XCTestCase {
         let position = WindowGeometry.currentSnapPosition(frame: randomFrame, visibleFrame: visibleFrame)
         XCTAssertNil(position)
     }
+    
+    // MARK: - Corner Quarter Tests (screen divided into 4 quadrants)
+    
+    func testTopLeftQuarter() {
+        let result = WindowGeometry.targetFrame(
+            for: .topLeftQuarter,
+            currentFrame: CGRect(x: 500, y: 500, width: 800, height: 600),
+            visibleFrame: visibleFrame
+        )
+        
+        XCTAssertEqual(result.origin.x, 0)
+        XCTAssertEqual(result.origin.y, 0)
+        XCTAssertEqual(result.width, 960)   // Half of 1920
+        XCTAssertEqual(result.height, 527.5) // Half of 1055
+    }
+    
+    func testTopRightQuarter() {
+        let result = WindowGeometry.targetFrame(
+            for: .topRightQuarter,
+            currentFrame: CGRect(x: 100, y: 100, width: 800, height: 600),
+            visibleFrame: visibleFrame
+        )
+        
+        XCTAssertEqual(result.origin.x, 960)  // Half of 1920
+        XCTAssertEqual(result.origin.y, 0)
+        XCTAssertEqual(result.width, 960)
+        XCTAssertEqual(result.height, 527.5)
+    }
+    
+    func testBottomLeftQuarter() {
+        let result = WindowGeometry.targetFrame(
+            for: .bottomLeftQuarter,
+            currentFrame: CGRect(x: 100, y: 100, width: 800, height: 600),
+            visibleFrame: visibleFrame
+        )
+        
+        XCTAssertEqual(result.origin.x, 0)
+        XCTAssertEqual(result.origin.y, 527.5)  // Half of 1055
+        XCTAssertEqual(result.width, 960)
+        XCTAssertEqual(result.height, 527.5)
+    }
+    
+    func testBottomRightQuarter() {
+        let result = WindowGeometry.targetFrame(
+            for: .bottomRightQuarter,
+            currentFrame: CGRect(x: 100, y: 100, width: 800, height: 600),
+            visibleFrame: visibleFrame
+        )
+        
+        XCTAssertEqual(result.origin.x, 960)
+        XCTAssertEqual(result.origin.y, 527.5)
+        XCTAssertEqual(result.width, 960)
+        XCTAssertEqual(result.height, 527.5)
+    }
+    
+    // MARK: - Corner Quarter Snap Position Detection Tests
+    
+    func testCurrentSnapPositionTopLeftQuarter() {
+        let frame = CGRect(x: 0, y: 0, width: 960, height: 527.5)
+        let position = WindowGeometry.currentSnapPosition(frame: frame, visibleFrame: visibleFrame)
+        XCTAssertEqual(position, .topLeftQuarter)
+    }
+    
+    func testCurrentSnapPositionTopRightQuarter() {
+        let frame = CGRect(x: 960, y: 0, width: 960, height: 527.5)
+        let position = WindowGeometry.currentSnapPosition(frame: frame, visibleFrame: visibleFrame)
+        XCTAssertEqual(position, .topRightQuarter)
+    }
+    
+    func testCurrentSnapPositionBottomLeftQuarter() {
+        let frame = CGRect(x: 0, y: 527.5, width: 960, height: 527.5)
+        let position = WindowGeometry.currentSnapPosition(frame: frame, visibleFrame: visibleFrame)
+        XCTAssertEqual(position, .bottomLeftQuarter)
+    }
+    
+    func testCurrentSnapPositionBottomRightQuarter() {
+        let frame = CGRect(x: 960, y: 527.5, width: 960, height: 527.5)
+        let position = WindowGeometry.currentSnapPosition(frame: frame, visibleFrame: visibleFrame)
+        XCTAssertEqual(position, .bottomRightQuarter)
+    }
 }

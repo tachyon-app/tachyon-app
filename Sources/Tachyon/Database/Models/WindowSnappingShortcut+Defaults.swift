@@ -8,6 +8,12 @@ extension WindowSnappingShortcut {
         .init(action: "topHalf", keyCode: 126, modifiers: 6144, isEnabled: true),    // Ctrl+Opt+↑
         .init(action: "bottomHalf", keyCode: 125, modifiers: 6144, isEnabled: true), // Ctrl+Opt+↓
         
+        // Corner Quarters (direct positioning)
+        .init(action: "topLeftQuarter", keyCode: 32, modifiers: 6144, isEnabled: true),      // Ctrl+Opt+U
+        .init(action: "topRightQuarter", keyCode: 34, modifiers: 6144, isEnabled: true),     // Ctrl+Opt+I
+        .init(action: "bottomLeftQuarter", keyCode: 38, modifiers: 6144, isEnabled: true),   // Ctrl+Opt+J
+        .init(action: "bottomRightQuarter", keyCode: 40, modifiers: 6144, isEnabled: true),  // Ctrl+Opt+K
+        
         // Cycle Quarters (clockwise: TL → TR → BR → BL)
         .init(action: "cycleQuarters", keyCode: 21, modifiers: 6144, isEnabled: true),  // Ctrl+Opt+4
         

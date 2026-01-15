@@ -144,6 +144,33 @@ public class StorageManager {
             self?.scheduleIconFetch()
         }
         
+        migrator.registerMigration("v10") { db in
+            // Add corner quarter shortcuts (screen divided into 4 quadrants)
+            let cornerQuarters: [(String, Int, Int)] = [
+                ("topLeftQuarter", 32, 6144),      // Ctrl+Opt+U
+                ("topRightQuarter", 34, 6144),     // Ctrl+Opt+I
+                ("bottomLeftQuarter", 38, 6144),   // Ctrl+Opt+J
+                ("bottomRightQuarter", 40, 6144),  // Ctrl+Opt+K
+            ]
+            
+            for (action, keyCode, modifiers) in cornerQuarters {
+                // Only insert if not already exists
+                let exists = try WindowSnappingShortcut
+                    .filter(Column("action") == action)
+                    .fetchCount(db) > 0
+                
+                if !exists {
+                    var shortcut = WindowSnappingShortcut(
+                        action: action,
+                        keyCode: UInt32(keyCode),
+                        modifiers: UInt32(modifiers),
+                        isEnabled: true
+                    )
+                    try shortcut.insert(db)
+                }
+            }
+        }
+        
         return migrator
     }
     
