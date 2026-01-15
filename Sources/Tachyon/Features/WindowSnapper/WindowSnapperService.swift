@@ -228,7 +228,47 @@ public final class WindowSnapperService {
             return
         }
         
-        // Move window to same relative position on next screen
+        // Check if window is at a snap position - if so, re-apply that snap on destination
+        if let snapPosition = WindowGeometry.currentSnapPosition(frame: currentFrame, visibleFrame: currentScreen.visibleFrame) {
+            // Re-apply the same snap action on the destination screen
+            let newFrame = WindowGeometry.targetFrame(
+                for: snapPosition,
+                currentFrame: currentFrame,
+                visibleFrame: nextScreen.visibleFrame
+            )
+            try accessibility.setWindowFrame(windowElement, frame: newFrame)
+            return
+        }
+        
+        // Check for thirds position
+        if let thirdPos = WindowGeometry.currentThirdPosition(frame: currentFrame, visibleFrame: currentScreen.visibleFrame) {
+            let newFrame = WindowGeometry.thirdFrame(position: thirdPos, visibleFrame: nextScreen.visibleFrame)
+            try accessibility.setWindowFrame(windowElement, frame: newFrame)
+            return
+        }
+        
+        // Check for two-thirds position
+        if let twoThirdsPos = WindowGeometry.currentTwoThirdsPosition(frame: currentFrame, visibleFrame: currentScreen.visibleFrame) {
+            let newFrame = WindowGeometry.twoThirdsFrame(position: twoThirdsPos, visibleFrame: nextScreen.visibleFrame)
+            try accessibility.setWindowFrame(windowElement, frame: newFrame)
+            return
+        }
+        
+        // Check for quarters position
+        if let quarterPos = WindowGeometry.currentQuarterPosition(frame: currentFrame, visibleFrame: currentScreen.visibleFrame) {
+            let newFrame = WindowGeometry.quarterFrame(position: quarterPos, visibleFrame: nextScreen.visibleFrame)
+            try accessibility.setWindowFrame(windowElement, frame: newFrame)
+            return
+        }
+        
+        // Check for three-quarters position
+        if let threeQuartersPos = WindowGeometry.currentThreeQuartersPosition(frame: currentFrame, visibleFrame: currentScreen.visibleFrame) {
+            let newFrame = WindowGeometry.threeQuartersFrame(position: threeQuartersPos, visibleFrame: nextScreen.visibleFrame)
+            try accessibility.setWindowFrame(windowElement, frame: newFrame)
+            return
+        }
+        
+        // Not at a snap position - use relative proportions as fallback
         let relativeX = (currentFrame.origin.x - currentScreen.visibleFrame.origin.x) / currentScreen.visibleFrame.width
         let relativeY = (currentFrame.origin.y - currentScreen.visibleFrame.origin.y) / currentScreen.visibleFrame.height
         let relativeWidth = currentFrame.width / currentScreen.visibleFrame.width

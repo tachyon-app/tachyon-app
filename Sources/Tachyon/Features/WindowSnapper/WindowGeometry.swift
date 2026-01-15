@@ -4,21 +4,29 @@ import AppKit
 /// Pure geometry calculations for window snapping
 public struct WindowGeometry {
     
+    /// Proportional tolerance for position detection (5% of screen dimension)
+    private static let proportionalTolerance: CGFloat = 0.05
+    
     // MARK: - Third Position Helpers
     
     /// Determine which third position the window is in (1=first, 2=center, 3=last) or nil
+    /// Uses proportional detection to work across different screen sizes
     public static func currentThirdPosition(frame: CGRect, visibleFrame: CGRect) -> Int? {
-        let tolerance: CGFloat = 5.0
-        let width = visibleFrame.width
-        let x = visibleFrame.origin.x
+        let tolerance = proportionalTolerance
         
-        // Check if it's full height
-        guard abs(frame.height - visibleFrame.height) < tolerance else { return nil }
-        guard abs(frame.width - width / 3) < tolerance else { return nil }
+        // Check proportional width (~33%)
+        let widthRatio = frame.width / visibleFrame.width
+        guard abs(widthRatio - 1.0/3.0) < tolerance else { return nil }
         
-        if abs(frame.origin.x - x) < tolerance { return 1 }  // First third
-        if abs(frame.origin.x - (x + width / 3)) < tolerance { return 2 }  // Center third
-        if abs(frame.origin.x - (x + width * 2 / 3)) < tolerance { return 3 }  // Last third
+        // Check proportional height (~100%)
+        let heightRatio = frame.height / visibleFrame.height
+        guard abs(heightRatio - 1.0) < tolerance else { return nil }
+        
+        // Check proportional X position
+        let xRatio = (frame.origin.x - visibleFrame.origin.x) / visibleFrame.width
+        if abs(xRatio - 0.0) < tolerance { return 1 }       // First third
+        if abs(xRatio - 1.0/3.0) < tolerance { return 2 }   // Center third
+        if abs(xRatio - 2.0/3.0) < tolerance { return 3 }   // Last third
         
         return nil
     }
@@ -41,16 +49,22 @@ public struct WindowGeometry {
     // MARK: - Two-Thirds Position Helpers
     
     /// Determine which two-thirds position the window is in (1=first, 2=last) or nil
+    /// Uses proportional detection to work across different screen sizes
     public static func currentTwoThirdsPosition(frame: CGRect, visibleFrame: CGRect) -> Int? {
-        let tolerance: CGFloat = 5.0
-        let width = visibleFrame.width
-        let x = visibleFrame.origin.x
+        let tolerance = proportionalTolerance
         
-        guard abs(frame.height - visibleFrame.height) < tolerance else { return nil }
-        guard abs(frame.width - width * 2 / 3) < tolerance else { return nil }
+        // Check proportional width (~66%)
+        let widthRatio = frame.width / visibleFrame.width
+        guard abs(widthRatio - 2.0/3.0) < tolerance else { return nil }
         
-        if abs(frame.origin.x - x) < tolerance { return 1 }  // First two thirds
-        if abs(frame.origin.x - (x + width / 3)) < tolerance { return 2 }  // Last two thirds
+        // Check proportional height (~100%)
+        let heightRatio = frame.height / visibleFrame.height
+        guard abs(heightRatio - 1.0) < tolerance else { return nil }
+        
+        // Check proportional X position
+        let xRatio = (frame.origin.x - visibleFrame.origin.x) / visibleFrame.width
+        if abs(xRatio - 0.0) < tolerance { return 1 }       // First two thirds
+        if abs(xRatio - 1.0/3.0) < tolerance { return 2 }   // Last two thirds
         
         return nil
     }
@@ -69,22 +83,27 @@ public struct WindowGeometry {
         }
     }
     
-    // MARK: - Quarter Position Helpers (clockwise: TL=1, TR=2, BR=3, BL=4)
+    // MARK: - Quarter Position Helpers (vertical quarters: 1, 2, 3, 4 from left to right)
     
     /// Determine which quarter position the window is in (1-4, vertical quarters) or nil
+    /// Uses proportional detection to work across different screen sizes
     public static func currentQuarterPosition(frame: CGRect, visibleFrame: CGRect) -> Int? {
-        let tolerance: CGFloat = 25.0  // Increased tolerance for window manager adjustments
-        let width = visibleFrame.width
-        let x = visibleFrame.origin.x
+        let tolerance = proportionalTolerance
         
-        // Check if it's full height and 1/4 width
-        guard abs(frame.height - visibleFrame.height) < tolerance else { return nil }
-        guard abs(frame.width - width / 4) < tolerance else { return nil }
+        // Check proportional width (~25%)
+        let widthRatio = frame.width / visibleFrame.width
+        guard abs(widthRatio - 0.25) < tolerance else { return nil }
         
-        if abs(frame.origin.x - x) < tolerance { return 1 }  // First quarter
-        if abs(frame.origin.x - (x + width / 4)) < tolerance { return 2 }  // Second quarter
-        if abs(frame.origin.x - (x + width / 2)) < tolerance { return 3 }  // Third quarter
-        if abs(frame.origin.x - (x + width * 3 / 4)) < tolerance { return 4 }  // Fourth quarter
+        // Check proportional height (~100%)
+        let heightRatio = frame.height / visibleFrame.height
+        guard abs(heightRatio - 1.0) < tolerance else { return nil }
+        
+        // Check proportional X position
+        let xRatio = (frame.origin.x - visibleFrame.origin.x) / visibleFrame.width
+        if abs(xRatio - 0.0) < tolerance { return 1 }    // First quarter
+        if abs(xRatio - 0.25) < tolerance { return 2 }   // Second quarter
+        if abs(xRatio - 0.5) < tolerance { return 3 }    // Third quarter
+        if abs(xRatio - 0.75) < tolerance { return 4 }   // Fourth quarter
         
         return nil
     }
@@ -108,16 +127,22 @@ public struct WindowGeometry {
     // MARK: - Three-Quarters Position Helpers
     
     /// Determine which three-quarters position the window is in (1=first, 2=last) or nil
+    /// Uses proportional detection to work across different screen sizes
     public static func currentThreeQuartersPosition(frame: CGRect, visibleFrame: CGRect) -> Int? {
-        let tolerance: CGFloat = 5.0
-        let width = visibleFrame.width
-        let x = visibleFrame.origin.x
+        let tolerance = proportionalTolerance
         
-        guard abs(frame.height - visibleFrame.height) < tolerance else { return nil }
-        guard abs(frame.width - width * 3 / 4) < tolerance else { return nil }
+        // Check proportional width (~75%)
+        let widthRatio = frame.width / visibleFrame.width
+        guard abs(widthRatio - 0.75) < tolerance else { return nil }
         
-        if abs(frame.origin.x - x) < tolerance { return 1 }  // First three quarters
-        if abs(frame.origin.x - (x + width / 4)) < tolerance { return 2 }  // Last three quarters
+        // Check proportional height (~100%)
+        let heightRatio = frame.height / visibleFrame.height
+        guard abs(heightRatio - 1.0) < tolerance else { return nil }
+        
+        // Check proportional X position
+        let xRatio = (frame.origin.x - visibleFrame.origin.x) / visibleFrame.width
+        if abs(xRatio - 0.0) < tolerance { return 1 }    // First three quarters
+        if abs(xRatio - 0.25) < tolerance { return 2 }   // Last three quarters
         
         return nil
     }
@@ -191,39 +216,47 @@ public struct WindowGeometry {
     }
     
     /// Determine if a window is currently at a snap position
+    /// Uses proportional detection to work across different screen sizes
     public static func currentSnapPosition(
         frame: CGRect,
         visibleFrame: CGRect
     ) -> WindowAction? {
-        let tolerance: CGFloat = 5.0
+        let tolerance = proportionalTolerance
         
-        func isClose(_ a: CGFloat, _ b: CGFloat) -> Bool {
-            abs(a - b) < tolerance
+        // Calculate proportional dimensions
+        let widthRatio = frame.width / visibleFrame.width
+        let heightRatio = frame.height / visibleFrame.height
+        let xRatio = (frame.origin.x - visibleFrame.origin.x) / visibleFrame.width
+        let yRatio = (frame.origin.y - visibleFrame.origin.y) / visibleFrame.height
+        
+        // Check maximize (~100% width and height, at origin)
+        if abs(widthRatio - 1.0) < tolerance && abs(heightRatio - 1.0) < tolerance &&
+           abs(xRatio) < tolerance && abs(yRatio) < tolerance {
+            return .maximize
         }
         
-        func framesMatch(_ a: CGRect, _ b: CGRect) -> Bool {
-            isClose(a.origin.x, b.origin.x) &&
-            isClose(a.origin.y, b.origin.y) &&
-            isClose(a.width, b.width) &&
-            isClose(a.height, b.height)
+        // Check left half (~50% width, ~100% height, at left edge)
+        if abs(widthRatio - 0.5) < tolerance && abs(heightRatio - 1.0) < tolerance &&
+           abs(xRatio) < tolerance {
+            return .leftHalf
         }
         
-        // Check basic positions
-        let positions: [WindowAction] = [
-            .maximize,
-            .leftHalf, .rightHalf, .topHalf, .bottomHalf
-        ]
+        // Check right half (~50% width, ~100% height, at right edge)
+        if abs(widthRatio - 0.5) < tolerance && abs(heightRatio - 1.0) < tolerance &&
+           abs(xRatio - 0.5) < tolerance {
+            return .rightHalf
+        }
         
-        for position in positions {
-            let targetFrame = self.targetFrame(
-                for: position,
-                currentFrame: frame,
-                visibleFrame: visibleFrame
-            )
-            
-            if framesMatch(frame, targetFrame) {
-                return position
-            }
+        // Check top half (~100% width, ~50% height, at top)
+        if abs(widthRatio - 1.0) < tolerance && abs(heightRatio - 0.5) < tolerance &&
+           abs(yRatio) < tolerance {
+            return .topHalf
+        }
+        
+        // Check bottom half (~100% width, ~50% height, at bottom)
+        if abs(widthRatio - 1.0) < tolerance && abs(heightRatio - 0.5) < tolerance &&
+           abs(yRatio - 0.5) < tolerance {
+            return .bottomHalf
         }
         
         return nil
