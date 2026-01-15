@@ -137,35 +137,121 @@ public class StorageManager {
             )
         }
         
+        migrator.registerMigration("v9") { [weak self] db in
+            // Fetch icons for search engines that are missing them
+            // This fixes the issue where default search engines were seeded without icons
+            // because the icon files didn't exist in the bundle
+            self?.scheduleIconFetch()
+        }
+        
         return migrator
     }
     
     private func seedDefaults(_ db: Database) throws {
-        // Define defaults
+        // Define defaults - icons will be fetched async by v9 migration
         let defaults = [
-            ("Google", "g", "https://google.com/search?q={{query}}", "google.png"),
-            ("GitHub", "gh", "https://github.com/search?q={{query}}", "github.png"),
-            ("YouTube", "yt", "https://youtube.com/results?search_query={{query}}", "youtube.png")
+            ("Google", "g", "https://google.com/search?q={{query}}"),
+            ("GitHub", "gh", "https://github.com/search?q={{query}}"),
+            ("YouTube", "yt", "https://youtube.com/results?search_query={{query}}")
         ]
         
-        for (name, keyword, template, iconName) in defaults {
-            var iconData: Data? = nil
-            
-            // Try to load icon from bundle resources
-            if let path = Bundle.main.path(forResource: iconName, ofType: nil, inDirectory: "Icons") {
-                iconData = try? Data(contentsOf: URL(fileURLWithPath: path))
-            }
-            
+        for (name, keyword, template) in defaults {
             let record = SearchEngineRecord(
                 id: UUID(),
                 name: name,
                 keyword: keyword,
                 urlTemplate: template,
-                icon: iconData
+                icon: nil  // Icons fetched async after DB setup
             )
             
             try record.insert(db)
         }
+    }
+    
+    /// Schedules async icon fetching for search engines missing icons
+    private func scheduleIconFetch() {
+        DispatchQueue.global(qos: .background).async { [weak self] in
+            self?.populateMissingSearchEngineIcons()
+        }
+    }
+    
+    /// Fetches favicons for search engines that are missing icons (runs on background thread)
+    private func populateMissingSearchEngineIcons() {
+        guard let dbQueue = dbQueue else { return }
+        
+        // Get all search engines with nil icons
+        let enginesWithMissingIcons: [SearchEngineRecord]
+        do {
+            enginesWithMissingIcons = try dbQueue.read { db in
+                try SearchEngineRecord.filter(Column("icon") == nil).fetchAll(db)
+            }
+        } catch {
+            print("❌ Error reading search engines: \(error)")
+            return
+        }
+        
+        guard !enginesWithMissingIcons.isEmpty else {
+            print("✅ All search engines already have icons")
+            return
+        }
+        
+        print("🔍 Fetching icons for \(enginesWithMissingIcons.count) search engines...")
+        
+        for engine in enginesWithMissingIcons {
+            // Synchronously fetch favicon
+            let iconData = fetchFaviconSync(for: engine.urlTemplate)
+            
+            if let iconData = iconData {
+                var updatedEngine = engine
+                updatedEngine.icon = iconData
+                
+                do {
+                    try dbQueue.write { db in
+                        try updatedEngine.update(db)
+                    }
+                    print("✅ Fetched icon for \(engine.name)")
+                } catch {
+                    print("⚠️ Failed to save icon for \(engine.name): \(error)")
+                }
+            } else {
+                print("⚠️ Could not fetch icon for \(engine.name)")
+            }
+        }
+    }
+    
+    /// Synchronously fetches favicon for a URL template
+    private func fetchFaviconSync(for urlTemplate: String) -> Data? {
+        // Extract domain from template
+        let cleanURL = urlTemplate
+            .replacingOccurrences(of: "{argument}", with: "test")
+            .replacingOccurrences(of: "{{query}}", with: "test")
+        
+        guard let url = URL(string: cleanURL),
+              let host = url.host else {
+            return nil
+        }
+        
+        let faviconURLString = "https://www.google.com/s2/favicons?domain=\(host)&sz=64"
+        guard let faviconURL = URL(string: faviconURLString) else {
+            return nil
+        }
+        
+        // Synchronous fetch using semaphore
+        var result: Data?
+        let semaphore = DispatchSemaphore(value: 0)
+        
+        let task = URLSession.shared.dataTask(with: faviconURL) { data, response, error in
+            if let data = data,
+               let httpResponse = response as? HTTPURLResponse,
+               httpResponse.statusCode == 200 {
+                result = data
+            }
+            semaphore.signal()
+        }
+        task.resume()
+        semaphore.wait()
+        
+        return result
     }
     
     // MARK: - Public API
