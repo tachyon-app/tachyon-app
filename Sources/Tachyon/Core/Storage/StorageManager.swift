@@ -114,9 +114,13 @@ public class StorageManager {
         }
         
         migrator.registerMigration("v7") { db in
-            // Add columns for URL metadata
-            try db.alter(table: "clipboard_items") { t in
-                t.add(column: "urlTitle", .text)
+            // Add columns for URL metadata (if not already present)
+            // Note: ClipboardItem.createTable now includes urlTitle, so we check first
+            let columns = try db.columns(in: "clipboard_items")
+            if !columns.contains(where: { $0.name == "urlTitle" }) {
+                try db.alter(table: "clipboard_items") { t in
+                    t.add(column: "urlTitle", .text)
+                }
             }
         }
         

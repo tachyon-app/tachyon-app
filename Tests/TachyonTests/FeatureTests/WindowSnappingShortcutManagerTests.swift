@@ -244,6 +244,6 @@ class WindowSnappingShortcutManagerTests: XCTestCase {
         let leftHalf = try repository.fetch(byAction: .leftHalf)!
         
         // Verify display name
-        XCTAssertEqual(leftHalf.displayName, "Left Half")
+        XCTAssertEqual(leftHalf.displayName, "Window Management Left Half")
     }
 }

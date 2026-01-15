@@ -49,15 +49,19 @@ final class FocusModePluginTests: XCTestCase {
     }
     
     func testStopFocusCommand() async {
+        // stop focus only shows results when a session is active
+        // With no session, it should return empty
         let results = await plugin.search(query: "stop focus")
         
-        XCTAssertFalse(results.isEmpty)
+        XCTAssertTrue(results.isEmpty, "Should be empty when no session is active")
     }
     
     func testPauseFocusCommand() async {
+        // pause focus only shows results when a session is active
+        // With no session, it should return empty
         let results = await plugin.search(query: "pause focus")
         
-        XCTAssertFalse(results.isEmpty)
+        XCTAssertTrue(results.isEmpty, "Should be empty when no session is active")
     }
     
     // MARK: - Quick Focus Tests

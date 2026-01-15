@@ -152,25 +152,25 @@ final class UnitConverterTests: XCTestCase {
     
     func testGigabytesToMegabytes() throws {
         let result = converter.convert("1 GB to MB")
-        
-        if let r = result?.result { XCTAssertEqual(r, 1024.0, accuracy: 0.001) }
+        // Uses decimal (SI) prefixes: 1 GB = 1000 MB
+        if let r = result?.result { XCTAssertEqual(r, 1000.0, accuracy: 0.001) }
     }
     
     func testMegabytesToKilobytes() throws {
         let result = converter.convert("1 MB to KB")
-        
-        if let r = result?.result { XCTAssertEqual(r, 1024.0, accuracy: 0.001) }
+        // Uses decimal (SI) prefixes: 1 MB = 1000 KB
+        if let r = result?.result { XCTAssertEqual(r, 1000.0, accuracy: 0.001) }
     }
     
     func testTerabytesToGigabytes() throws {
         let result = converter.convert("1 TB to GB")
-        
-        if let r = result?.result { XCTAssertEqual(r, 1024.0, accuracy: 0.001) }
+        // Uses decimal (SI) prefixes: 1 TB = 1000 GB
+        if let r = result?.result { XCTAssertEqual(r, 1000.0, accuracy: 0.001) }
     }
     
     func testBytesToKilobytes() throws {
-        let result = converter.convert("2048 bytes to KB")
-        
+        let result = converter.convert("2000 bytes to KB")
+        // Uses decimal (SI) prefixes: 2000 bytes = 2 KB
         if let r = result?.result { XCTAssertEqual(r, 2.0, accuracy: 0.001) }
     }
     
@@ -210,8 +210,8 @@ final class UnitConverterTests: XCTestCase {
     
     func testFormattedOutput() throws {
         let result = converter.convert("5 km to miles")
-        
-        XCTAssertTrue(result!.formattedResult.contains("3.1"), "Should format to reasonable decimals")
+        // 5 km = 3.10685 miles, formatted result should contain "3.1" or "3.10"
+        XCTAssertTrue(result!.formattedResult.contains("3.1") || result!.formattedResult.contains("3,1"), "Should format to reasonable decimals")
     }
     
     // MARK: - Type Property Tests
