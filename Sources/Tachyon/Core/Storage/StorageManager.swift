@@ -171,6 +171,14 @@ public class StorageManager {
             }
         }
         
+        migrator.registerMigration("v11") { db in
+            // Create scenes table for window layout recording
+            try WindowScene.createTable(in: db)
+            
+            // Create scene_windows table with foreign key to scenes
+            try SceneWindow.createTable(in: db)
+        }
+        
         return migrator
     }
     

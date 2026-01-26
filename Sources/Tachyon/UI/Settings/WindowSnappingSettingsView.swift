@@ -1,9 +1,17 @@
 import SwiftUI
 import TachyonCore
 
-/// Window Snapping settings view with customizable shortcuts
+/// Tab options for Window Snapping settings
+enum WindowSnappingTab: String, CaseIterable {
+    case shortcuts = "Shortcuts"
+    case scenes = "Scenes"
+}
+
+/// Window Snapping settings view with customizable shortcuts and scenes tabs
 struct WindowSnappingSettingsView: View {
     @StateObject private var viewModel = WindowSnappingSettingsViewModel()
+    @StateObject private var scenesViewModel = ScenesSettingsViewModel()
+    @State private var selectedTab: WindowSnappingTab = .shortcuts
     
     var body: some View {
         ScrollView {
@@ -18,60 +26,62 @@ struct WindowSnappingSettingsView: View {
                                 .font(.system(size: 24, weight: .semibold))
                                 .foregroundColor(.white)
                             
-                            Text("Customize keyboard shortcuts for window management")
+                            Text(selectedTab == .shortcuts 
+                                 ? "Customize keyboard shortcuts for window management" 
+                                 : "Save and restore window layouts")
                                 .font(.system(size: 13))
                                 .foregroundColor(Color.white.opacity(0.55))
                         }
                         
                         Spacer()
                         
-                        Button("Reset to Defaults") {
-                            viewModel.resetToDefaults()
+                        if selectedTab == .shortcuts {
+                            Button("Reset to Defaults") {
+                                viewModel.resetToDefaults()
+                            }
+                            .buttonStyle(SecondaryButtonStyle())
                         }
-                        .buttonStyle(SecondaryButtonStyle())
                     }
                     
-                    Divider()
-                        .background(Color.white.opacity(0.08))
-                    
-                    // Shortcuts grouped by category
-                    if viewModel.isLoading {
-                        ProgressView()
-                            .progressViewStyle(.circular)
-                            .frame(maxWidth: .infinity, alignment: .center)
-                            .padding(.vertical, 40)
-                    } else {
-                        VStack(spacing: 24) {
-                            ShortcutSection(
-                                title: "Halves",
-                                shortcuts: viewModel.halves,
-                                onUpdate: viewModel.updateShortcut
-                            )
-                            
-                            ShortcutSection(
-                                title: "Quarters",
-                                shortcuts: viewModel.quarters,
-                                onUpdate: viewModel.updateShortcut
-                            )
-                            
-                            ShortcutSection(
-                                title: "Thirds",
-                                shortcuts: viewModel.thirds,
-                                onUpdate: viewModel.updateShortcut
-                            )
-                            
-                            ShortcutSection(
-                                title: "Multi-Monitor",
-                                shortcuts: viewModel.multiMonitor,
-                                onUpdate: viewModel.updateShortcut
-                            )
-                            
-                            ShortcutSection(
-                                title: "Other",
-                                shortcuts: viewModel.other,
-                                onUpdate: viewModel.updateShortcut
-                            )
+                    // Tab Picker
+                    HStack(spacing: 0) {
+                        ForEach(WindowSnappingTab.allCases, id: \.self) { tab in
+                            Button(action: { selectedTab = tab }) {
+                                VStack(spacing: 8) {
+                                    HStack(spacing: 6) {
+                                        Image(systemName: tab == .shortcuts ? "keyboard" : "rectangle.3.group")
+                                            .font(.system(size: 13))
+                                        Text(tab.rawValue)
+                                            .font(.system(size: 13, weight: .medium))
+                                    }
+                                    .foregroundColor(selectedTab == tab ? Color(hex: "#3B86F7") : .white.opacity(0.5))
+                                    .padding(.horizontal, 20)
+                                    .padding(.vertical, 10)
+                                    
+                                    // Underline indicator
+                                    Rectangle()
+                                        .fill(selectedTab == tab ? Color(hex: "#3B86F7") : Color.clear)
+                                        .frame(height: 2)
+                                }
+                            }
+                            .buttonStyle(.plain)
                         }
+                        Spacer()
+                    }
+                    .background(
+                        VStack {
+                            Spacer()
+                            Rectangle()
+                                .fill(Color.white.opacity(0.08))
+                                .frame(height: 1)
+                        }
+                    )
+                    
+                    // Content based on selected tab
+                    if selectedTab == .shortcuts {
+                        shortcutsContent
+                    } else {
+                        ScenesSettingsSection(viewModel: scenesViewModel)
                     }
                 }
                 .frame(maxWidth: 700)
@@ -82,6 +92,49 @@ struct WindowSnappingSettingsView: View {
         }
         .onAppear {
             viewModel.loadShortcuts()
+            scenesViewModel.loadScenes()
+        }
+    }
+    
+    @ViewBuilder
+    private var shortcutsContent: some View {
+        if viewModel.isLoading {
+            ProgressView()
+                .progressViewStyle(.circular)
+                .frame(maxWidth: .infinity, alignment: .center)
+                .padding(.vertical, 40)
+        } else {
+            VStack(spacing: 24) {
+                ShortcutSection(
+                    title: "Halves",
+                    shortcuts: viewModel.halves,
+                    onUpdate: viewModel.updateShortcut
+                )
+                
+                ShortcutSection(
+                    title: "Quarters",
+                    shortcuts: viewModel.quarters,
+                    onUpdate: viewModel.updateShortcut
+                )
+                
+                ShortcutSection(
+                    title: "Thirds",
+                    shortcuts: viewModel.thirds,
+                    onUpdate: viewModel.updateShortcut
+                )
+                
+                ShortcutSection(
+                    title: "Multi-Monitor",
+                    shortcuts: viewModel.multiMonitor,
+                    onUpdate: viewModel.updateShortcut
+                )
+                
+                ShortcutSection(
+                    title: "Other",
+                    shortcuts: viewModel.other,
+                    onUpdate: viewModel.updateShortcut
+                )
+            }
         }
     }
 }

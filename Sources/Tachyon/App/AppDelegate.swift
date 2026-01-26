@@ -18,6 +18,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private var windowSnapperService: WindowSnapperService?
     private var windowSnapperHotkeyIDs: [UUID] = []
     
+    // Scenes
+    private var scenesHotkeyManager: ScenesHotkeyManager?
+    
     // Clipboard history
     private var clipboardHistoryHotkeyID: UUID?
     
@@ -39,6 +42,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         
         // Initialize window snapping
         setupWindowSnapping()
+        
+        // Initialize scenes hotkeys
+        scenesHotkeyManager = ScenesHotkeyManager.shared
         
         // Listen for shortcut changes
         NotificationCenter.default.addObserver(

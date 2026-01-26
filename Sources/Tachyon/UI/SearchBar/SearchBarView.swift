@@ -1,5 +1,6 @@
 import SwiftUI
 import AppKit
+import AVFoundation
 
 /// Main search bar view with results
 struct SearchBarView: View {
@@ -7,7 +8,15 @@ struct SearchBarView: View {
     @FocusState private var isSearchFocused: Bool
     
     var body: some View {
-        if let (script, metadata, arguments) = viewModel.showingScriptOutput {
+        // Camera view takes over the entire window when active
+        if viewModel.showingCameraView {
+            CameraView(
+                cameraService: viewModel.cameraService,
+                onClose: {
+                    viewModel.showingCameraView = false
+                }
+            )
+        } else if let (script, metadata, arguments) = viewModel.showingScriptOutput {
             // Show script output view
             ScriptOutputView(script: script, metadata: metadata, arguments: arguments) {
                 viewModel.showingScriptOutput = nil
@@ -219,6 +228,10 @@ class SearchBarViewModel: ObservableObject {
     @Published var showingScriptOutput: (ScriptRecord, ScriptMetadata, [Int: String])? = nil
     @Published var showingScriptArgumentForm: (ScriptRecord, ScriptMetadata)? = nil
     
+    // Camera state
+    @Published var showingCameraView: Bool = false
+    let cameraService = CameraService()
+    
     // Inline argument state (Raycast-style)
     @Published var inlineArgumentContext: InlineArgumentContext? = nil
     @Published var inlineArguments: [InlineArgument] = []
@@ -322,6 +335,11 @@ class SearchBarViewModel: ObservableObject {
         queryEngine.register(plugin: clipboardPlugin)
         print("✅ ClipboardHistoryPlugin registered")
         
+        print("🔌 Registering CameraPlugin...")
+        let cameraPlugin = CameraPlugin()
+        queryEngine.register(plugin: cameraPlugin)
+        print("✅ CameraPlugin registered")
+        
         // Listen for status bar updates
         NotificationCenter.default.addObserver(
             forName: NSNotification.Name("UpdateStatusBar"),
@@ -400,6 +418,17 @@ class SearchBarViewModel: ObservableObject {
         ) { [weak self] _ in
             Task { @MainActor in
                 self?.query = ""
+            }
+        }
+        
+        // Listen for OpenCameraView notification (from CameraPlugin)
+        NotificationCenter.default.addObserver(
+            forName: NSNotification.Name("OpenCameraView"),
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in
+                self?.showingCameraView = true
             }
         }
         // Setup debounced search

@@ -14,8 +14,9 @@ Welcome to the complete Tachyon documentation. This guide covers all features an
 7. [Quicklinks (Custom Links)](#quicklinks-custom-links)
 8. [Search Engines](#search-engines)
 9. [Script Commands](#script-commands)
-10. [Settings](#settings)
+10. [Camera](#camera)
 11. [Clipboard History](#clipboard-history)
+12. [Settings](#settings)
 
 ---
 
@@ -430,7 +431,7 @@ Green flash, notification, and sound when the session ends.
 
 ## Window Management (Snapping)
 
-Organize your workspace efficiently by snapping windows to specific areas of the screen using keyboard shortcuts.
+Organize your workspace efficiently by snapping windows to specific areas of the screen using keyboard shortcuts, or save complete window layouts as **Scenes**.
 
 ### Features
 
@@ -448,8 +449,20 @@ Organize your workspace efficiently by snapping windows to specific areas of the
 - **Cycle Quarters**: Moves the window to the next corner clockwise.
 - **Cycle Thirds**: Moves between left, center, and right thirds.
 
+### Scenes
+
+Scenes allow you to **save and restore complete window layouts** with a single hotkey.
+
+- **Create a Scene**: Open Settings → Window Snapping → Scenes tab.
+- **Add Windows**: Configure each window's position, size, and display.
+- **Assign Shortcuts**: Press a custom hotkey to activate the scene globally.
+- **Multi-Window Support**: Scenes can include multiple windows of the same app (e.g., 2 VSCode windows). Missing windows are automatically spawned.
+
+[View Full Documentation](WINDOW_MANAGEMENT.md)
+
 ### Configuration
-Customize all hotkeys in **Settings > Window Management**.
+Customize shortcuts in **Settings > Window Snapping > Shortcuts** tab.
+Manage scenes in **Settings > Window Snapping > Scenes** tab.
 *Note: Requires Accessibility permissions.*
 
 ---
@@ -505,6 +518,41 @@ Use Raycast-compatible magic comments:
 - **compact**: Displays the last line as a toast.
 - **inline**: Replaces result title with output.
 - **silent**: Runs in background.
+
+---
+
+## Camera
+
+Capture photos directly from Tachyon using your Mac's built-in or external webcam.
+
+### Quick Start
+
+Type `camera` in the search bar and press Enter to open the camera view.
+
+### Features
+
+- **Live Preview**: Real-time camera feed with mirrored display (like a selfie)
+- **Photo Capture**: Press `Enter` to take a photo with visual flash feedback
+- **Configurable Save Location**: Set your preferred folder in Settings → General → Camera
+- **Camera Switching**: Works with built-in and external cameras
+
+### Keyboard Shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| `Enter` | Take photo (saves to configured folder) |
+| `Escape` | Close camera, return to search |
+
+### Search Keywords
+
+Find the camera command by typing:
+- `camera`, `webcam`, `photo`, `selfie`, `picture`, `snapshot`
+
+### Permissions
+
+macOS will prompt for camera access on first use. Grant permission in **System Settings → Privacy & Security → Camera**.
+
+[View Full Documentation](CAMERA.md)
 
 ---
 

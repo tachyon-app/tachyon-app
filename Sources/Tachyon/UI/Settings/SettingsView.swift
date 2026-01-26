@@ -147,6 +147,12 @@ struct TabButton: View {
 /// General settings view with dark theme
 struct GeneralSettingsView: View {
     @StateObject private var launchAtLoginService = LaunchAtLoginService.shared
+    @State private var photoSaveLocation: URL = {
+        if let savedPath = UserDefaults.standard.string(forKey: "CameraDefaultSaveLocation") {
+            return URL(fileURLWithPath: savedPath)
+        }
+        return FileManager.default.urls(for: .desktopDirectory, in: .userDomainMask).first!
+    }()
     
     var body: some View {
         ScrollView {
@@ -236,12 +242,63 @@ struct GeneralSettingsView: View {
                             .foregroundColor(Color.white.opacity(0.4))
                             .padding(.top, 4)
                     }
+                    
+                    Divider()
+                        .background(Color.white.opacity(0.06))
+                    
+                    // Camera Section
+                    SettingsSection(title: "Camera") {
+                        SettingsRow(label: "Photo Save Location") {
+                            Button(action: selectPhotoSaveLocation) {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "folder")
+                                        .font(.system(size: 12))
+                                    Text(photoSaveLocation.lastPathComponent)
+                                        .font(.system(size: 12))
+                                        .lineLimit(1)
+                                }
+                                .foregroundColor(Color.white.opacity(0.75))
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 6)
+                                .background(Color(hex: "#252525"))
+                                .cornerRadius(5)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        
+                        Text("Photos captured with the camera will be saved to this folder.")
+                            .font(.system(size: 11))
+                            .foregroundColor(Color.white.opacity(0.4))
+                            .padding(.top, 6)
+                    }
                 }
                 .frame(maxWidth: 600)
                 
                 Spacer()
             }
             .padding(.vertical, 40)
+        }
+    }
+    
+    private func selectPhotoSaveLocation() {
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = false
+        panel.canChooseDirectories = true
+        panel.allowsMultipleSelection = false
+        panel.directoryURL = photoSaveLocation
+        panel.prompt = "Select"
+        panel.message = "Choose where to save camera photos"
+        
+        panel.begin { response in
+            if response == .OK, let url = panel.url {
+                photoSaveLocation = url
+                UserDefaults.standard.set(url.path, forKey: "CameraDefaultSaveLocation")
+                // Notify CameraService to update immediately
+                NotificationCenter.default.post(
+                    name: NSNotification.Name("CameraSaveLocationChanged"),
+                    object: url
+                )
+            }
         }
     }
 }

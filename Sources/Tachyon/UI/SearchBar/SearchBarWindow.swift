@@ -84,9 +84,52 @@ public class SearchBarWindow: NSWindow {
                 return nil // Consume the event
             }
             
+            // When camera is showing, handle camera-specific keys
+            if self.viewModel.showingCameraView {
+                if event.keyCode == 53 { // Escape - Close camera
+                    print("⬅️ Escape - closing camera view")
+                    self.viewModel.cameraService.stopSession()
+                    self.viewModel.showingCameraView = false
+                    // Focus back on search bar after closing camera
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                        NotificationCenter.default.post(name: NSNotification.Name("FocusSearchBar"), object: nil)
+                    }
+                    return nil
+                }
+                if event.keyCode == 36 { // Enter - Take Photo
+                    print("📸 Enter - taking photo in camera view")
+                    // Trigger flash effect
+                    NotificationCenter.default.post(name: NSNotification.Name("CameraFlash"), object: nil)
+                    Task { @MainActor in
+                        do {
+                            let photo = try await self.viewModel.cameraService.capturePhoto()
+                            let savedURL = try self.viewModel.cameraService.savePhoto(photo)
+                            NotificationCenter.default.post(
+                                name: NSNotification.Name("UpdateStatusBar"),
+                                object: ("📸", "Photo saved to \(savedURL.lastPathComponent)")
+                            )
+                        } catch {
+                            print("❌ Photo capture failed: \(error)")
+                        }
+                    }
+                    return nil
+                }
+                // Consume all other keys when camera is showing to prevent search bar interaction
+                return nil
+            }
+            
             if event.keyCode == 53 { // 53 is Escape
                 // Handle go-back navigation directly
-                if self.viewModel.isCollectingArguments {
+                if self.viewModel.showingCameraView {
+                    print("⬅️ Escape - closing camera view")
+                    self.viewModel.cameraService.stopSession()
+                    self.viewModel.showingCameraView = false
+                    // Focus back on search bar after closing camera
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                        NotificationCenter.default.post(name: NSNotification.Name("FocusSearchBar"), object: nil)
+                    }
+                    return nil
+                } else if self.viewModel.isCollectingArguments {
                     print("⬅️ Escape - exiting inline argument mode")
                     self.viewModel.exitInlineArgumentMode()
                     return nil
