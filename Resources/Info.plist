@@ -26,5 +26,7 @@
     <string>Copyright © 2025 Tachyon. Open Source.</string>
     <key>NSPrincipalClass</key>
     <string>NSApplication</string>
+    <key>NSCameraUsageDescription</key>
+    <string>Tachyon uses the camera to capture photos via the Camera command.</string>
 </dict>
 </plist>
