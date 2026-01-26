@@ -9,6 +9,11 @@ public class SearchBarWindow: NSWindow {
     private var localEventMonitor: Any?
     private var shouldHandleEvents = true
     
+    /// Track the last screen where the window was displayed
+    private var lastScreen: NSScreen?
+    /// Track the last position on that screen (relative to screen frame)
+    private var lastPositionOnScreen: NSPoint?
+    
     /// Callback to open settings
     public var onOpenSettings: (() -> Void)?
     
@@ -173,17 +178,34 @@ public class SearchBarWindow: NSWindow {
     
     /// Show the search bar
     public func show() {
-        // Center on the screen with the cursor
-        if let screen = NSScreen.main {
-            let screenFrame = screen.visibleFrame
-            let windowFrame = self.frame
-            
-            // Position near top of screen
+        // Get the current focused screen
+        guard let currentScreen = NSScreen.main else { return }
+        let screenFrame = currentScreen.visibleFrame
+        let windowFrame = self.frame
+        
+        // Check if we're on the same screen as last time
+        let isSameScreen = lastScreen != nil && lastScreen == currentScreen
+        
+        if isSameScreen, let lastPosition = lastPositionOnScreen {
+            // Restore the last position on the same screen
+            self.setFrameOrigin(lastPosition)
+            print("📍 Restored position: \(lastPosition)")
+        } else {
+            // Position the search bar at upper-center of screen (like Spotlight)
+            // Place the window so the TOP of the window is at about 2/3 up from bottom
+            // This puts the search bar in a comfortable position with room for results below
             let x = screenFrame.midX - windowFrame.width / 2
-            let y = screenFrame.maxY - windowFrame.height - 100
+            let windowTop = screenFrame.minY + screenFrame.height * 0.75  // 3/4 up from bottom = 1/4 from top
+            let y = windowTop - windowFrame.height
+            
+            print("📍 Screen frame: \(screenFrame), height: \(screenFrame.height)")
+            print("📍 Window top at: \(windowTop), origin y: \(y)")
             
             self.setFrameOrigin(NSPoint(x: x, y: y))
         }
+        
+        // Update tracking
+        lastScreen = currentScreen
         
         shouldHandleEvents = true
         self.makeKeyAndOrderFront(nil)
@@ -198,6 +220,9 @@ public class SearchBarWindow: NSWindow {
     
     /// Hide the search bar
     public func hide() {
+        // Save current position for next time (on same screen)
+        lastPositionOnScreen = self.frame.origin
+        
         shouldHandleEvents = false
         self.orderOut(nil)
         searchBarView.clearSearch()
