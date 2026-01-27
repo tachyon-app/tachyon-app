@@ -26,6 +26,10 @@ Capture photos directly from Tachyon using your Mac's built-in or external webca
 - Photos save automatically to your configured folder (default: Desktop)
 - Format: `Tachyon_Photo_YYYY-MM-DD_HH-mm-ss.png`
 
+### Switching Cameras
+- **Multiple Cameras detected**: A switch button appears in the status bar
+- **Auto-Cycle**: Clicking the switch button cycles through all available cameras
+
 ### Configuring Save Location
 1. Open Settings (`⌘,`)
 2. Go to **General** tab

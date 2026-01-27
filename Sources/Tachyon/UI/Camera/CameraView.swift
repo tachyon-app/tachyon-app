@@ -164,6 +164,20 @@ struct CameraView: View {
             
             // Action buttons
             HStack(spacing: 16) {
+                // Switch Camera button
+                if cameraService.availableCameras.count > 1 {
+                    Button(action: { cameraService.cycleCamera() }) {
+                        Image(systemName: "arrow.triangle.2.circlepath.camera")
+                            .font(.system(size: 14))
+                            .foregroundColor(.white.opacity(0.8))
+                            .frame(width: 28, height: 28)
+                            .background(Color.white.opacity(0.1))
+                            .clipShape(Circle())
+                    }
+                    .buttonStyle(.plain)
+                    .help("Switch Camera")
+                }
+
                 // Take Photo button
                 Button(action: takePhoto) {
                     HStack(spacing: 6) {

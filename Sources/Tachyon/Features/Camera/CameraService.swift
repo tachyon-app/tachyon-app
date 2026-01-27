@@ -219,6 +219,18 @@ public class CameraService: NSObject, ObservableObject {
         updateMirrorState()
     }
     
+    /// Cycle to the next available camera
+    public func cycleCamera() {
+        guard availableCameras.count > 1, let current = currentCamera else { return }
+        
+        if let index = availableCameras.firstIndex(where: { $0.uniqueID == current.uniqueID }) {
+            let nextIndex = (index + 1) % availableCameras.count
+            switchCamera(to: availableCameras[nextIndex])
+        } else if let first = availableCameras.first {
+            switchCamera(to: first)
+        }
+    }
+    
     // MARK: - Mirroring
     
     /// Toggle video mirroring
