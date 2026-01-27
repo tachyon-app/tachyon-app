@@ -109,43 +109,70 @@ public class WindowAccessibilityService: WindowAccessibilityServiceProtocol {
             throw WindowAccessibilityError.cannotSetFrame
         }
         
-        // For cross-display moves, we need to:
-        // 1. Set position first to move to new screen
-        // 2. Then set size (which may be constrained by old screen)
-        // 3. Set size AGAIN to ensure it takes effect on new screen
+        // Robust strategy for cross-display moves:
+        // 1. Set position to move to the new screen/location.
+        // 2. Set size (post-sizing).
         
-        // Set position first
+        print("🔍 DEBUG: setWindowFrame - Target: \(frame)")
+        
+        // Step 1: Set Position
         let posResult = AXUIElementSetAttributeValue(
             element,
             kAXPositionAttribute as CFString,
             positionValue
         )
+        print("🔍 DEBUG: setWindowFrame - Set Pos Result: \(posResult.rawValue)")
         
-        // Set size
-        let sizeResult = AXUIElementSetAttributeValue(
+        guard posResult == .success else {
+            throw WindowAccessibilityError.cannotSetFrame
+        }
+        
+        // Step 2: Post-size (definitive)
+        // We do this immediately. If it fails to resize fully, we enter a retry loop.
+        let sizeResultValue = AXUIElementSetAttributeValue(
             element,
             kAXSizeAttribute as CFString,
             sizeValue
         )
+        print("🔍 DEBUG: setWindowFrame - Set Size Result: \(sizeResultValue.rawValue)")
         
-        guard posResult == .success && sizeResult == .success else {
-            throw WindowAccessibilityError.cannotSetFrame
+        // Verify and Retry Logic
+        // We verify if the frame was actually set correctly. If not, we retry up to 3 times
+        // with small delays, which is often needed for macOS to register the screen change.
+        var attempts = 0
+        let maxAttempts = 3
+        
+        while attempts < maxAttempts {
+            // Check current frame
+            if let currentFrame = try? getWindowFrame(element) {
+                print("🔍 DEBUG: setWindowFrame - Retry Check Loop \(attempts) - Current: \(currentFrame)")
+                
+                // Check if frame matches within tolerance
+                let tolerance: CGFloat = 20.0
+                let widthDiff = abs(currentFrame.width - frame.width)
+                let heightDiff = abs(currentFrame.height - frame.height)
+                let xDiff = abs(currentFrame.origin.x - frame.origin.x)
+                let yDiff = abs(currentFrame.origin.y - frame.origin.y)
+                
+                print("🔍 DEBUG: setWindowFrame - Diffs: w=\(widthDiff) h=\(heightDiff) x=\(xDiff) y=\(yDiff)")
+                
+                // If dimensions match reasonably well, we are done
+                if widthDiff < tolerance && heightDiff < tolerance && xDiff < tolerance && yDiff < tolerance {
+                    print("🔍 DEBUG: setWindowFrame - Success!")
+                    return
+                }
+            }
+            
+            // If we are here, potential failure. Wait briefly and retry sizing/positioning
+            attempts += 1
+            print("🔍 DEBUG: setWindowFrame - Retrying \(attempts)...")
+            usleep(20000) // 20ms
+            
+            // Re-apply position then size
+            _ = AXUIElementSetAttributeValue(element, kAXPositionAttribute as CFString, positionValue)
+            _ = AXUIElementSetAttributeValue(element, kAXSizeAttribute as CFString, sizeValue)
         }
-        
-        // Verify the frame was actually set
-        let actualFrame = try getWindowFrame(element)
-        
-        // If size didn't take effect (common with cross-display moves), set it again
-        let sizeTolerance: CGFloat = 10.0
-        if abs(actualFrame.width - frame.width) > sizeTolerance || 
-           abs(actualFrame.height - frame.height) > sizeTolerance {
-            // Retry setting size now that window is on new screen
-            _ = AXUIElementSetAttributeValue(
-                element,
-                kAXSizeAttribute as CFString,
-                sizeValue
-            )
-        }
+        print("🔍 DEBUG: setWindowFrame - Failed after \(maxAttempts) attempts")
     }
     
     /// Check if accessibility permissions are granted

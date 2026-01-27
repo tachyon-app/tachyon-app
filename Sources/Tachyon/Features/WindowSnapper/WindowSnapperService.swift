@@ -12,6 +12,34 @@ public final class WindowSnapperService {
     /// Cached dock offsets per screen (keyed by screen frame description)
     private var cachedDockOffsets: [String: CGFloat] = [:]
     
+    // MARK: - Coordinate Conversion Helpers
+    
+    /// Convert Cocoa frame (bottom-left origin) to Accessibility frame (top-left origin)
+    private func toAXFrame(from cocoaFrame: CGRect) -> CGRect {
+        // Accessibility APIs use a flipped coordinate system where (0,0) is top-left of the PRIMARY screen
+        // Cocoa uses (0,0) as bottom-left of the PRIMARY screen
+        // Formula: AX_Y = PrimaryScreenHeight - (Cocoa_Y + Height)
+        
+        // Find primary screen (the one at 0,0 in Cocoa coords)
+        let primaryHeight = NSScreen.screens.first { $0.frame.origin == .zero }?.frame.height 
+            ?? NSScreen.main?.frame.height 
+            ?? 0
+            
+        var axFrame = cocoaFrame
+        axFrame.origin.y = primaryHeight - (cocoaFrame.origin.y + cocoaFrame.height)
+        
+        // DEBUG LOGGING (Can be removed later)
+        // print("🔍 DEBUG: toAXFrame: Cocoa \(cocoaFrame) -> AX \(axFrame) (Primary Height: \(primaryHeight))")
+        
+        return axFrame
+    }
+    
+    /// Convert Accessibility frame (top-left origin) to Cocoa frame (bottom-left origin)
+    private func toCocoaFrame(from axFrame: CGRect) -> CGRect {
+        // The conversion is symmetric
+        return toAXFrame(from: axFrame)
+    }
+    
     public init(accessibility: WindowAccessibilityServiceProtocol = WindowAccessibilityService()) {
         self.accessibility = accessibility
     }
@@ -31,21 +59,33 @@ public final class WindowSnapperService {
             throw WindowAccessibilityError.noFrontmostWindow
         }
         
-        // Get current frame
+        // Get current frame (AX coordinates)
         let currentFrame = try accessibility.getWindowFrame(windowElement)
         
+        // Convert to Cocoa coordinates for accurate screen detection
+        let currentCocoaFrame = toCocoaFrame(from: currentFrame)
+        
         // Determine owning screen
-        let owningScreen = ScreenResolver.owningScreen(for: currentFrame)
-        var visibleFrame = owningScreen.visibleFrame
+        let owningScreen = ScreenResolver.owningScreen(for: currentCocoaFrame)
+        let visibleFrame = owningScreen.visibleFrame // Cocoa coordinates
+        
+        // Convert visible frame to AX coordinates for geometry calculations
+        // WindowGeometry assumes Y-down / top-left origin logic (matching AX)
+        var visibleFrameAX = toAXFrame(from: visibleFrame)
         
         // IMPORTANT: visibleFrame may not reflect actual usable area due to dock
         // We detect dock offset when window is near the bottom of the screen,
         // then cache it for future use on this screen.
-        var adjustedVisibleFrame = visibleFrame
+        var adjustedVisibleFrameAX = visibleFrameAX
         let screenKey = "\(owningScreen.frame)"
         
-        let isFullWidth = abs(currentFrame.width - visibleFrame.width) < 10.0
-        let yOffsetFromBottom = currentFrame.origin.y - visibleFrame.origin.y
+        // Use AX frames for relative check
+        let isFullWidth = abs(currentFrame.width - visibleFrameAX.width) < 10.0
+        // In AX (Y-down), bottom is Y + Height. Dock is at bottom.
+        // If window is near bottom of screen...
+        let screenBottomAX = visibleFrameAX.origin.y + visibleFrameAX.height
+        let windowBottomAX = currentFrame.origin.y + currentFrame.height
+        let yOffsetFromBottom = screenBottomAX - windowBottomAX
         let isNearBottom = yOffsetFromBottom > 0 && yOffsetFromBottom < 100
         
         // Try to detect and cache dock offset when window is near bottom
@@ -55,14 +95,13 @@ public final class WindowSnapperService {
         
         // Apply cached dock offset if we have one for this screen
         if let dockOffset = cachedDockOffsets[screenKey], dockOffset > 0 {
-            // The dock takes up space at the bottom, but the USABLE height stays the same
-            // We just need to shift the y origin up by the dock offset
-            // Height stays the same as visibleFrame.height
-            adjustedVisibleFrame = CGRect(
-                x: visibleFrame.origin.x,
-                y: visibleFrame.origin.y + dockOffset,  // Start above dock
-                width: visibleFrame.width,
-                height: visibleFrame.height  // Height stays the same!
+            // In AX coordinates (Y-down), reducing the height effectively lifts the bottom
+            // because origin is at top. We want to exclude the dock area at the bottom.
+            adjustedVisibleFrameAX = CGRect(
+                x: visibleFrameAX.origin.x,
+                y: visibleFrameAX.origin.y,
+                width: visibleFrameAX.width,
+                height: visibleFrameAX.height - dockOffset // Reduce height to avoid dock
             )
         }
         
@@ -71,24 +110,24 @@ public final class WindowSnapperService {
         
         switch action {
         case .cycleThirds:
-            let currentPos = WindowGeometry.currentThirdPosition(frame: currentFrame, visibleFrame: adjustedVisibleFrame)
+            let currentPos = WindowGeometry.currentThirdPosition(frame: currentFrame, visibleFrame: adjustedVisibleFrameAX)
             let nextPos = currentPos.map { ($0 % 3) + 1 } ?? 1  // Cycle or start at first
-            targetFrame = WindowGeometry.thirdFrame(position: nextPos, visibleFrame: adjustedVisibleFrame)
+            targetFrame = WindowGeometry.thirdFrame(position: nextPos, visibleFrame: adjustedVisibleFrameAX)
             
         case .cycleTwoThirds:
-            let currentPos = WindowGeometry.currentTwoThirdsPosition(frame: currentFrame, visibleFrame: adjustedVisibleFrame)
+            let currentPos = WindowGeometry.currentTwoThirdsPosition(frame: currentFrame, visibleFrame: adjustedVisibleFrameAX)
             let nextPos = currentPos.map { ($0 % 2) + 1 } ?? 1  // Cycle or start at first
-            targetFrame = WindowGeometry.twoThirdsFrame(position: nextPos, visibleFrame: adjustedVisibleFrame)
+            targetFrame = WindowGeometry.twoThirdsFrame(position: nextPos, visibleFrame: adjustedVisibleFrameAX)
             
         case .cycleQuarters:
-            let currentPos = WindowGeometry.currentQuarterPosition(frame: currentFrame, visibleFrame: adjustedVisibleFrame)
+            let currentPos = WindowGeometry.currentQuarterPosition(frame: currentFrame, visibleFrame: adjustedVisibleFrameAX)
             let nextPos = currentPos.map { ($0 % 4) + 1 } ?? 1  // Cycle or start at first
-            targetFrame = WindowGeometry.quarterFrame(position: nextPos, visibleFrame: adjustedVisibleFrame)
+            targetFrame = WindowGeometry.quarterFrame(position: nextPos, visibleFrame: adjustedVisibleFrameAX)
             
         case .cycleThreeQuarters:
-            let currentPos = WindowGeometry.currentThreeQuartersPosition(frame: currentFrame, visibleFrame: adjustedVisibleFrame)
+            let currentPos = WindowGeometry.currentThreeQuartersPosition(frame: currentFrame, visibleFrame: adjustedVisibleFrameAX)
             let nextPos = currentPos.map { ($0 % 2) + 1 } ?? 1  // Cycle or start at first
-            targetFrame = WindowGeometry.threeQuartersFrame(position: nextPos, visibleFrame: adjustedVisibleFrame)
+            targetFrame = WindowGeometry.threeQuartersFrame(position: nextPos, visibleFrame: adjustedVisibleFrameAX)
             
         default:
             // Check if we're at an edge and should traverse
@@ -97,16 +136,19 @@ public final class WindowSnapperService {
                     action: action,
                     currentFrame: currentFrame,
                     owningScreen: owningScreen,
-                    adjustedVisibleFrame: adjustedVisibleFrame
+                    adjustedVisibleFrame: adjustedVisibleFrameAX
                 )
             } else {
                 targetFrame = WindowGeometry.targetFrame(
                     for: action,
                     currentFrame: currentFrame,
-                    visibleFrame: adjustedVisibleFrame
+                    visibleFrame: adjustedVisibleFrameAX
                 )
             }
         }
+        
+        print("🔍 DEBUG: Execution Target Frame: \(targetFrame)")
+        print("🔍 DEBUG: Current Adjusted Visible Frame from Owning Screen: \(adjustedVisibleFrameAX)")
         
         // Apply the new frame (first pass - macOS may enforce minimum size constraints)
         try accessibility.setWindowFrame(windowElement, frame: targetFrame)
@@ -114,8 +156,21 @@ public final class WindowSnapperService {
         // Second pass: check if window overflows screen bounds due to minimum size constraints
         // (apps like Finder have minimum widths that may cause overflow)
         let actualFrame = try accessibility.getWindowFrame(windowElement)
-        let screenRight = adjustedVisibleFrame.origin.x + adjustedVisibleFrame.width
+        
+        // IMPORTANT: We must re-calculate which screen the window is INTEEDED to be on (Target).
+        // If we relying on actualFrame, animation lag might report the OLD screen, causing
+        // false positive overflow detection against the wrong screen bounds.
+        let targetCocoaFrame = toCocoaFrame(from: targetFrame)
+        let intendedOwningScreen = ScreenResolver.owningScreen(for: targetCocoaFrame)
+        let intendedVisibleFrame = intendedOwningScreen.visibleFrame
+        let intendedVisibleFrameAX = toAXFrame(from: intendedVisibleFrame)
+        
+        // Use the INTENDED screen's bounds for the overflow check
+        let screenRight = intendedVisibleFrameAX.origin.x + intendedVisibleFrameAX.width
         let actualRight = actualFrame.origin.x + actualFrame.width
+        
+        // DEBUG: Print details
+        // print("🔍 DEBUG: Overflow Check against screen: \(currentVisibleFrameAX)")
         
         if actualRight > screenRight + 5 {  // 5px tolerance
             // Window extends past right edge, shift it left
@@ -123,13 +178,14 @@ public final class WindowSnapperService {
             var correctedFrame = actualFrame
             correctedFrame.origin.x -= overflow
             
-            // Ensure we don't go past left edge
-            if correctedFrame.origin.x < adjustedVisibleFrame.origin.x {
-                correctedFrame.origin.x = adjustedVisibleFrame.origin.x
+            // Ensure we don't go past left edge of the INTENDED screen
+            if correctedFrame.origin.x < intendedVisibleFrameAX.origin.x {
+                correctedFrame.origin.x = intendedVisibleFrameAX.origin.x
             }
             
             try accessibility.setWindowFrame(windowElement, frame: correctedFrame)
         }
+
     }
     
     /// Calculate target frame with traversal logic
@@ -157,10 +213,15 @@ public final class WindowSnapperService {
         ) {
             // Move to the opposite edge of the next screen
             let oppositeAction = getOppositeAction(for: action)
+            
+            // CRITICAL: Convert next screen's visible frame to AX coordinates
+            // WindowGeometry expects Y-down / top-left origin logic
+            let nextScreenVisibleAX = toAXFrame(from: nextScreen.visibleFrame)
+            
             return WindowGeometry.targetFrame(
                 for: oppositeAction,
                 currentFrame: currentFrame,
-                visibleFrame: nextScreen.visibleFrame
+                visibleFrame: nextScreenVisibleAX
             )
         }
         
@@ -223,8 +284,11 @@ public final class WindowSnapperService {
             throw WindowAccessibilityError.noFrontmostWindow
         }
         
+        // Get current frame (AX coords)
         let currentFrame = try accessibility.getWindowFrame(windowElement)
-        let currentScreen = ScreenResolver.owningScreen(for: currentFrame)
+        // Convert to Cocoa for screen detection
+        let currentCocoaFrame = toCocoaFrame(from: currentFrame)
+        let currentScreen = ScreenResolver.owningScreen(for: currentCocoaFrame)
         
         // Detect arrangement orientation and choose appropriate direction
         let orientation = ScreenResolver.arrangementOrientation()
@@ -249,56 +313,61 @@ public final class WindowSnapperService {
         }
         
         // Check if window is at a snap position - if so, re-apply that snap on destination
-        if let snapPosition = WindowGeometry.currentSnapPosition(frame: currentFrame, visibleFrame: currentScreen.visibleFrame) {
+        // Use AX visible frames for position checking
+        let currentVisibleAX = toAXFrame(from: currentScreen.visibleFrame)
+        let nextVisibleAX = toAXFrame(from: nextScreen.visibleFrame)
+        
+        if let snapPosition = WindowGeometry.currentSnapPosition(frame: currentFrame, visibleFrame: currentVisibleAX) {
             // Re-apply the same snap action on the destination screen
             let newFrame = WindowGeometry.targetFrame(
                 for: snapPosition,
                 currentFrame: currentFrame,
-                visibleFrame: nextScreen.visibleFrame
+                visibleFrame: nextVisibleAX
             )
             try accessibility.setWindowFrame(windowElement, frame: newFrame)
             return
         }
         
         // Check for thirds position
-        if let thirdPos = WindowGeometry.currentThirdPosition(frame: currentFrame, visibleFrame: currentScreen.visibleFrame) {
-            let newFrame = WindowGeometry.thirdFrame(position: thirdPos, visibleFrame: nextScreen.visibleFrame)
+        if let thirdPos = WindowGeometry.currentThirdPosition(frame: currentFrame, visibleFrame: currentVisibleAX) {
+            let newFrame = WindowGeometry.thirdFrame(position: thirdPos, visibleFrame: nextVisibleAX)
             try accessibility.setWindowFrame(windowElement, frame: newFrame)
             return
         }
         
         // Check for two-thirds position
-        if let twoThirdsPos = WindowGeometry.currentTwoThirdsPosition(frame: currentFrame, visibleFrame: currentScreen.visibleFrame) {
-            let newFrame = WindowGeometry.twoThirdsFrame(position: twoThirdsPos, visibleFrame: nextScreen.visibleFrame)
+        if let twoThirdsPos = WindowGeometry.currentTwoThirdsPosition(frame: currentFrame, visibleFrame: currentVisibleAX) {
+            let newFrame = WindowGeometry.twoThirdsFrame(position: twoThirdsPos, visibleFrame: nextVisibleAX)
             try accessibility.setWindowFrame(windowElement, frame: newFrame)
             return
         }
         
         // Check for quarters position
-        if let quarterPos = WindowGeometry.currentQuarterPosition(frame: currentFrame, visibleFrame: currentScreen.visibleFrame) {
-            let newFrame = WindowGeometry.quarterFrame(position: quarterPos, visibleFrame: nextScreen.visibleFrame)
+        if let quarterPos = WindowGeometry.currentQuarterPosition(frame: currentFrame, visibleFrame: currentVisibleAX) {
+            let newFrame = WindowGeometry.quarterFrame(position: quarterPos, visibleFrame: nextVisibleAX)
             try accessibility.setWindowFrame(windowElement, frame: newFrame)
             return
         }
         
         // Check for three-quarters position
-        if let threeQuartersPos = WindowGeometry.currentThreeQuartersPosition(frame: currentFrame, visibleFrame: currentScreen.visibleFrame) {
-            let newFrame = WindowGeometry.threeQuartersFrame(position: threeQuartersPos, visibleFrame: nextScreen.visibleFrame)
+        if let threeQuartersPos = WindowGeometry.currentThreeQuartersPosition(frame: currentFrame, visibleFrame: currentVisibleAX) {
+            let newFrame = WindowGeometry.threeQuartersFrame(position: threeQuartersPos, visibleFrame: nextVisibleAX)
             try accessibility.setWindowFrame(windowElement, frame: newFrame)
             return
         }
         
         // Not at a snap position - use relative proportions as fallback
-        let relativeX = (currentFrame.origin.x - currentScreen.visibleFrame.origin.x) / currentScreen.visibleFrame.width
-        let relativeY = (currentFrame.origin.y - currentScreen.visibleFrame.origin.y) / currentScreen.visibleFrame.height
-        let relativeWidth = currentFrame.width / currentScreen.visibleFrame.width
-        let relativeHeight = currentFrame.height / currentScreen.visibleFrame.height
+        // Use AX coords for relative calculation
+        let relativeX = (currentFrame.origin.x - currentVisibleAX.origin.x) / currentVisibleAX.width
+        let relativeY = (currentFrame.origin.y - currentVisibleAX.origin.y) / currentVisibleAX.height
+        let relativeWidth = currentFrame.width / currentVisibleAX.width
+        let relativeHeight = currentFrame.height / currentVisibleAX.height
         
         let newFrame = CGRect(
-            x: nextScreen.visibleFrame.origin.x + (nextScreen.visibleFrame.width * relativeX),
-            y: nextScreen.visibleFrame.origin.y + (nextScreen.visibleFrame.height * relativeY),
-            width: nextScreen.visibleFrame.width * relativeWidth,
-            height: nextScreen.visibleFrame.height * relativeHeight
+            x: nextVisibleAX.origin.x + (nextVisibleAX.width * relativeX),
+            y: nextVisibleAX.origin.y + (nextVisibleAX.height * relativeY),
+            width: nextVisibleAX.width * relativeWidth,
+            height: nextVisibleAX.height * relativeHeight
         )
         
         try accessibility.setWindowFrame(windowElement, frame: newFrame)
