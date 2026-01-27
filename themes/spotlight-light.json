@@ -1,0 +1,28 @@
+{
+    "id": "spotlight-light",
+    "name": "Spotlight Light",
+    "windowBackgroundColor": "#E6FFFFFF",
+    "windowBackgroundGradientColors": [
+        "#F2FFFFFF",
+        "#D9FFFFFF"
+    ],
+    "windowBorderColor": "#66E5E5E5",
+    "windowCornerRadius": 22.0,
+    "windowWidth": 800.0,
+    "searchFieldBackgroundColor": "#00000000",
+    "searchFieldTextColor": "#333333",
+    "searchFieldPlaceholderColor": "#8E8E93",
+    "searchIconColor": "#8E8E93",
+    "resultRowBackgroundColor": "#00000000",
+    "resultRowSelectedBackgroundColor": "#26007AFF",
+    "resultRowTextColor": "#333333",
+    "resultRowSelectedTextColor": "#000000",
+    "resultRowSubtextColor": "#8E8E93",
+    "resultRowSelectedSubtextColor": "#333333",
+    "resultIconColor": "#8E8E93",
+    "resultSelectedIconColor": "#007AFF",
+    "statusBarBackgroundColor": "#00000000",
+    "statusBarTextColor": "#8E8E93",
+    "accentColor": "#007AFF",
+    "separatorColor": "#33C6C6C8"
+}

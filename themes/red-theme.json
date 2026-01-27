@@ -1,0 +1,27 @@
+{
+  "id": "red-theme",
+  "name": "Red Alert",
+  "windowBackgroundColor": "#2A0F0F",
+  "windowBorderColor": "#FF3333",
+  "windowCornerRadius": 16.0,
+  
+  "searchFieldBackgroundColor": "#4A1F1F",
+  "searchFieldTextColor": "#FFFFFF",
+  "searchFieldPlaceholderColor": "#D46666",
+  "searchIconColor": "#FF3333",
+  
+  "resultRowBackgroundColor": "#2A0F0F",
+  "resultRowSelectedBackgroundColor": "#4A1F1F",
+  "resultRowTextColor": "#FFFFFF",
+  "resultRowSelectedTextColor": "#FFCCCC",
+  "resultRowSubtextColor": "#994444",
+  "resultRowSelectedSubtextColor": "#CC6666",
+  "resultIconColor": "#994444",
+  "resultSelectedIconColor": "#FF3333",
+  
+  "statusBarBackgroundColor": "#1F0A0A",
+  "statusBarTextColor": "#FF3333",
+  
+  "accentColor": "#FF0000",
+  "separatorColor": "#441111"
+}

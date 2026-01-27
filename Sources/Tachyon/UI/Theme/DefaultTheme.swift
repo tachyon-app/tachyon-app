@@ -2,7 +2,7 @@ import SwiftUI
 
 struct DefaultTheme: Theme {
     let id = ThemeType.default.id
-    let name = ThemeType.default.rawValue
+    let name = ThemeType.default.name
     
     // MARK: - Window
     let windowBackgroundColor = Color(hex: "#1a1a1a")

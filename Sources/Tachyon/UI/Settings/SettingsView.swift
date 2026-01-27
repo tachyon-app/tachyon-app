@@ -181,14 +181,42 @@ struct GeneralSettingsView: View {
                     
                     // Appearance Section
                     SettingsSection(title: "Appearance") {
-                        SettingsRow(label: "Theme") {
-                            Picker("", selection: $themeManager.activeThemeType) {
-                                ForEach(ThemeType.allCases) { theme in
-                                    Text(theme.rawValue).tag(theme)
+                        VStack(alignment: .leading, spacing: 8) {
+                            SettingsRow(label: "Theme") {
+                                HStack(spacing: 8) {
+                                    Picker("", selection: $themeManager.activeThemeType) {
+                                        ForEach(themeManager.availableThemes) { theme in
+                                            Text(theme.name).tag(theme)
+                                        }
+                                    }
+                                    .labelsHidden()
+                                    .frame(width: 140)
+                                    
+                                    Button(action: {
+                                        themeManager.reloadThemes()
+                                    }) {
+                                        Image(systemName: "arrow.clockwise")
+                                            .font(.system(size: 11))
+                                            .frame(width: 20, height: 20)
+                                    }
+                                    .buttonStyle(.plain)
+                                    .help("Reload Themes")
+                                    .background(Color(hex: "#2a2a2a"))
+                                    .cornerRadius(4)
                                 }
                             }
-                            .labelsHidden()
-                            .frame(width: 120)
+                            
+                            HStack {
+                                Spacer()
+                                Button(action: {
+                                    ThemeFileManager.shared.openThemesFolder()
+                                }) {
+                                    Text("Open Themes Folder")
+                                        .font(.system(size: 11))
+                                        .foregroundColor(Color(hex: "#3B86F7"))
+                                }
+                                .buttonStyle(.plain)
+                            }
                         }
                     }
                     

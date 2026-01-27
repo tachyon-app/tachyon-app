@@ -45,6 +45,8 @@ struct StatusBarComponent: View {
         self.showActionButtons = showActionButtons
     }
     
+    @ObservedObject var themeManager = ThemeManager.shared
+    
     var body: some View {
         HStack(spacing: 12) {
             // Left side: Icon and message
@@ -57,7 +59,7 @@ struct StatusBarComponent: View {
                 // Message text
                 Text(state.message)
                     .font(.system(size: 13))
-                    .foregroundColor(.white.opacity(0.7))
+                    .foregroundColor(themeManager.currentTheme.statusBarTextColor)
                     .lineLimit(1)
             }
             
@@ -70,35 +72,35 @@ struct StatusBarComponent: View {
                     HStack(spacing: 6) {
                         Text("Open")
                             .font(.system(size: 12))
-                            .foregroundColor(.white.opacity(0.4))
+                            .foregroundColor(themeManager.currentTheme.statusBarTextColor.opacity(0.6))
                         Text("↵")
                             .font(.system(size: 12, design: .monospaced))
-                            .foregroundColor(Color(hex: "#3B86F7"))
+                            .foregroundColor(themeManager.currentTheme.accentColor)
                     }
                     
                     // Divider
                     Text("|")
                         .font(.system(size: 12))
-                        .foregroundColor(.white.opacity(0.2))
+                        .foregroundColor(themeManager.currentTheme.separatorColor)
                     
                     // Actions hint
                     HStack(spacing: 6) {
                         Text("Actions")
                             .font(.system(size: 12))
-                            .foregroundColor(.white.opacity(0.4))
+                            .foregroundColor(themeManager.currentTheme.statusBarTextColor.opacity(0.6))
                         Text("⌘K")
                             .font(.system(size: 12, design: .monospaced))
-                            .foregroundColor(Color(hex: "#3B86F7"))
+                            .foregroundColor(themeManager.currentTheme.accentColor)
                     }
                 }
             }
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 10)
-        .background(Color.clear)
+        .background(themeManager.currentTheme.statusBarBackgroundColor)
         .overlay(
             Rectangle()
-                .fill(Color.white.opacity(0.08))
+                .fill(themeManager.currentTheme.separatorColor)
                 .frame(height: 1),
             alignment: .top
         )

@@ -86,15 +86,23 @@ struct SearchBarView: View {
                                 .font(.system(size: 18, weight: .medium))
                                 .foregroundColor(themeManager.currentTheme.searchIconColor)
                             
-                            TextField("Search for apps and commands...", text: $viewModel.query)
-                                .textFieldStyle(.plain)
-                                .font(.system(size: 20, weight: .regular, design: .default))
-                                .foregroundColor(themeManager.currentTheme.searchFieldTextColor)
-                                .focused($isSearchFocused)
-                                .onSubmit {
-                                    viewModel.executeSelectedResult()
+                            ZStack(alignment: .leading) {
+                                if viewModel.query.isEmpty {
+                                    Text("Search for apps and commands...")
+                                        .font(.system(size: 20, weight: .regular, design: .default))
+                                        .foregroundColor(themeManager.currentTheme.searchFieldPlaceholderColor)
+                                        .allowsHitTesting(false) // Let touches pass through to TextField
                                 }
-                            
+                                
+                                TextField("", text: $viewModel.query)
+                                    .textFieldStyle(.plain)
+                                    .font(.system(size: 20, weight: .regular, design: .default))
+                                    .foregroundColor(themeManager.currentTheme.searchFieldTextColor)
+                                    .focused($isSearchFocused)
+                                    .onSubmit {
+                                        viewModel.executeSelectedResult()
+                                    }
+                            }
                             if !viewModel.query.isEmpty {
                                 Button(action: { viewModel.query = "" }) {
                                     Image(systemName: "xmark.circle.fill")
@@ -135,7 +143,7 @@ struct SearchBarView: View {
                     )
                 }
                 .background(
-                    themeManager.currentTheme.windowBackgroundGradient
+                    themeManager.currentTheme.windowBackgroundGradient ?? AnyView(themeManager.currentTheme.windowBackgroundColor)
                 )
                 .clipShape(RoundedRectangle(cornerRadius: themeManager.currentTheme.windowCornerRadius, style: .continuous))
                 .overlay(
@@ -146,7 +154,7 @@ struct SearchBarView: View {
                 // Push content to top
                 Spacer(minLength: 0)
             }
-            .frame(width: 680, height: 560) // Fixed height window - content aligns to top
+            .frame(width: themeManager.currentTheme.windowWidth, height: 560) // Fixed height window - content aligns to top
             .onAppear {
                 isSearchFocused = true
             }

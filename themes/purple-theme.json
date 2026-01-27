@@ -1,0 +1,27 @@
+{
+    "id": "purple-dump",
+    "name": "Purple Dump",
+    "windowBackgroundColor": "#2D1B69",
+    "windowBackgroundGradientColors": [
+        "#2D1B69",
+        "#1A0F3C"
+    ],
+    "windowBorderColor": "#4D8F80D1",
+    "windowCornerRadius": 20.0,
+    "searchFieldBackgroundColor": "#33000000",
+    "searchFieldTextColor": "#FFFFFF",
+    "searchFieldPlaceholderColor": "#80FFFFFF",
+    "searchIconColor": "#D450E6",
+    "resultRowBackgroundColor": "#00000000",
+    "resultRowSelectedBackgroundColor": "#4D5E17EB",
+    "resultRowTextColor": "#FFFFFF",
+    "resultRowSelectedTextColor": "#FFFFFF",
+    "resultRowSubtextColor": "#B8B8D0",
+    "resultRowSelectedSubtextColor": "#E6FFFFFF",
+    "resultIconColor": "#B8B8D0",
+    "resultSelectedIconColor": "#D450E6",
+    "statusBarBackgroundColor": "#33000000",
+    "statusBarTextColor": "#B8B8D0",
+    "accentColor": "#D450E6",
+    "separatorColor": "#1AFFFFFF"
+}
