@@ -208,13 +208,34 @@ public class SearchBarWindow: NSWindow {
         lastScreen = currentScreen
         
         shouldHandleEvents = true
-        self.makeKeyAndOrderFront(nil)
+        
+        // Force activation with multiple methods
+        // 1. Standard AppKit activation
         NSApp.activate(ignoringOtherApps: true)
+        
+        // 2. Window specific ordering
+        self.makeKeyAndOrderFront(nil)
+        self.orderFrontRegardless()
+        
+        // 3. Process level activation (stronger)
+        NSRunningApplication.current.activate(options: [.activateIgnoringOtherApps])
         
         // Focus the search field via notification after a short delay
         // This ensures the window is fully visible and SwiftUI view is ready
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
             NotificationCenter.default.post(name: NSNotification.Name("FocusSearchBar"), object: nil)
+        }
+        
+        // Retry mechanism: Check if we actually got focus, if not, try harder
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
+            guard let self = self else { return }
+            if !self.isKeyWindow {
+                print("⚠️ Window failed to become key, retrying activation...")
+                NSApp.activate(ignoringOtherApps: true)
+                self.makeKeyAndOrderFront(nil)
+                self.orderFrontRegardless()
+                NSRunningApplication.current.activate(options: [.activateIgnoringOtherApps])
+            }
         }
     }
     
