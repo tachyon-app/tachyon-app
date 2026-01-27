@@ -5,6 +5,7 @@ import AVFoundation
 /// Main search bar view with results
 struct SearchBarView: View {
     @ObservedObject var viewModel: SearchBarViewModel
+    @ObservedObject var themeManager = ThemeManager.shared
     @FocusState private var isSearchFocused: Bool
     
     var body: some View {
@@ -83,12 +84,12 @@ struct SearchBarView: View {
                             // Normal search mode
                             Image(systemName: "magnifyingglass")
                                 .font(.system(size: 18, weight: .medium))
-                                .foregroundColor(Color(hex: "#3B86F7"))
+                                .foregroundColor(themeManager.currentTheme.searchIconColor)
                             
                             TextField("Search for apps and commands...", text: $viewModel.query)
                                 .textFieldStyle(.plain)
                                 .font(.system(size: 20, weight: .regular, design: .default))
-                                .foregroundColor(.white)
+                                .foregroundColor(themeManager.currentTheme.searchFieldTextColor)
                                 .focused($isSearchFocused)
                                 .onSubmit {
                                     viewModel.executeSelectedResult()
@@ -98,7 +99,7 @@ struct SearchBarView: View {
                                 Button(action: { viewModel.query = "" }) {
                                     Image(systemName: "xmark.circle.fill")
                                         .font(.system(size: 16))
-                                        .foregroundColor(Color.white.opacity(0.4))
+                                        .foregroundColor(themeManager.currentTheme.searchFieldTextColor.opacity(0.4))
                                 }
                                 .buttonStyle(.plain)
                             }
@@ -106,10 +107,11 @@ struct SearchBarView: View {
                     }
                     .padding(.horizontal, 20)
                     .padding(.vertical, 18)
+                    .background(themeManager.currentTheme.searchFieldBackgroundColor)
                     
                     // Divider
                     Rectangle()
-                        .fill(Color.white.opacity(0.08))
+                        .fill(themeManager.currentTheme.separatorColor)
                         .frame(height: 1)
                     
                     // Results list
@@ -133,30 +135,13 @@ struct SearchBarView: View {
                     )
                 }
                 .background(
-                    ZStack {
-                        // Dark gradient background
-                        LinearGradient(
-                            colors: [
-                                Color(hex: "#1a1a1a"),
-                                Color(hex: "#1f1f1f")
-                            ],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                        
-                        // Subtle blue glow at top
-                        RadialGradient(
-                            colors: [
-                                Color(hex: "#3B86F7").opacity(0.05),
-                                Color.clear
-                            ],
-                            center: .top,
-                            startRadius: 0,
-                            endRadius: 300
-                        )
-                    }
+                    themeManager.currentTheme.windowBackgroundGradient
                 )
-                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: themeManager.currentTheme.windowCornerRadius, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: themeManager.currentTheme.windowCornerRadius, style: .continuous)
+                        .stroke(themeManager.currentTheme.windowBorderColor, lineWidth: 1)
+                )
                 
                 // Push content to top
                 Spacer(minLength: 0)

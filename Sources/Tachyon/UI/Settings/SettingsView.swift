@@ -147,6 +147,7 @@ struct TabButton: View {
 /// General settings view with dark theme
 struct GeneralSettingsView: View {
     @StateObject private var launchAtLoginService = LaunchAtLoginService.shared
+    @ObservedObject var themeManager = ThemeManager.shared
     @State private var photoSaveLocation: URL = {
         if let savedPath = UserDefaults.standard.string(forKey: "CameraDefaultSaveLocation") {
             return URL(fileURLWithPath: savedPath)
@@ -177,6 +178,22 @@ struct GeneralSettingsView: View {
                             .font(.system(size: 13))
                             .foregroundColor(Color.white.opacity(0.55))
                     }
+                    
+                    // Appearance Section
+                    SettingsSection(title: "Appearance") {
+                        SettingsRow(label: "Theme") {
+                            Picker("", selection: $themeManager.activeThemeType) {
+                                ForEach(ThemeType.allCases) { theme in
+                                    Text(theme.rawValue).tag(theme)
+                                }
+                            }
+                            .labelsHidden()
+                            .frame(width: 120)
+                        }
+                    }
+                    
+                    Divider()
+                        .background(Color.white.opacity(0.06))
                     
                     // Startup Section
                     SettingsSection(title: "Startup") {

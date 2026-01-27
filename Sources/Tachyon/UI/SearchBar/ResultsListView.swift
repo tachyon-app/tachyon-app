@@ -1,6 +1,7 @@
 import SwiftUI
 
 /// List of search results with premium dark design
+/// List of search results with premium dark design
 struct ResultsListView: View {
     let results: [QueryResult]
     let selectedIndex: Int
@@ -8,6 +9,7 @@ struct ResultsListView: View {
     let onExecute: (QueryResult) -> Void
     
     @State private var isUsingKeyboard = false
+    @State private var isMouseSelection = false
     
     var body: some View {
         ScrollViewReader { proxy in
@@ -27,6 +29,7 @@ struct ResultsListView: View {
                         }
                         .onHover { hovering in
                             if hovering && !isUsingKeyboard {
+                                isMouseSelection = true
                                 onSelect(index)
                             }
                         }
@@ -36,6 +39,11 @@ struct ResultsListView: View {
             .frame(height: min(CGFloat(results.count) * 56, 448)) // 8 rows max
             .scrollIndicators(.hidden)
             .onChange(of: selectedIndex) { newIndex in
+                if isMouseSelection {
+                    isMouseSelection = false
+                    return
+                }
+                
                 // Mark that keyboard is being used
                 isUsingKeyboard = true
                 
@@ -57,6 +65,7 @@ struct ResultRowView: View {
     let isSelected: Bool
     let allowHover: Bool
     @State private var isHovered = false
+    @ObservedObject var themeManager = ThemeManager.shared
     
     var body: some View {
         HStack(spacing: 12) {
@@ -80,7 +89,7 @@ struct ResultRowView: View {
                 } else {
                     Image(systemName: "doc.fill")
                         .font(.system(size: 20))
-                        .foregroundColor(Color.white.opacity(0.6))
+                        .foregroundColor(isSelected ? themeManager.currentTheme.resultSelectedIconColor : themeManager.currentTheme.resultIconColor)
                         .frame(width: 32, height: 32)
                 }
             } else if let icon = result.icon {
@@ -94,13 +103,13 @@ struct ResultRowView: View {
                     // Render as SF Symbol
                     Image(systemName: icon)
                         .font(.system(size: 20))
-                        .foregroundColor(Color.white.opacity(0.6))
+                        .foregroundColor(isSelected ? themeManager.currentTheme.resultSelectedIconColor : themeManager.currentTheme.resultIconColor)
                         .frame(width: 32, height: 32)
                 }
             } else {
                 Image(systemName: "app.fill")
                     .font(.system(size: 20))
-                    .foregroundColor(Color.white.opacity(0.6))
+                    .foregroundColor(isSelected ? themeManager.currentTheme.resultSelectedIconColor : themeManager.currentTheme.resultIconColor)
                     .frame(width: 32, height: 32)
             }
             
@@ -108,12 +117,12 @@ struct ResultRowView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(result.title)
                     .font(.system(size: 15, weight: .medium))
-                    .foregroundColor(.white)
+                    .foregroundColor(isSelected ? themeManager.currentTheme.resultRowSelectedTextColor : themeManager.currentTheme.resultRowTextColor)
                 
                 if let subtitle = result.subtitle {
                     Text(subtitle)
                         .font(.system(size: 13))
-                        .foregroundColor(Color.white.opacity(0.6))
+                        .foregroundColor(isSelected ? themeManager.currentTheme.resultRowSelectedSubtextColor : themeManager.currentTheme.resultRowSubtextColor)
                         .lineLimit(1)
                         .truncationMode(.middle)
                 }
@@ -125,7 +134,7 @@ struct ResultRowView: View {
             if isSelected {
                 Text("⌘ ↵")
                     .font(.system(size: 12, design: .monospaced))
-                    .foregroundColor(Color.white.opacity(0.4))
+                    .foregroundColor(themeManager.currentTheme.resultRowSelectedSubtextColor.opacity(0.6))
             }
         }
         .padding(.horizontal, 16)
@@ -142,12 +151,11 @@ struct ResultRowView: View {
                     HStack(spacing: 0) {
                         // Blue left border
                         Rectangle()
-                            .fill(Color(hex: "#3B86F7"))
+                            .fill(themeManager.currentTheme.accentColor)
                             .frame(width: 3)
                         
                         // Blue background
-                        Color(hex: "#3B86F7")
-                            .opacity(0.15)
+                        themeManager.currentTheme.resultRowSelectedBackgroundColor
                     }
                 }
             }
