@@ -179,6 +179,25 @@ public class StorageManager {
             try SceneWindow.createTable(in: db)
         }
         
+        migrator.registerMigration("v12") { db in
+            // Focus Mode Profiles and Items
+            try FocusProfileRecord.createTable(in: db)
+            try SpotifyItemRecord.createTable(in: db)
+            
+            // Seed default profile
+            let defaultProfile = FocusProfileRecord(
+                id: UUID(),
+                name: "Standard",
+                isMusicEnabled: true,
+                lastDuration: 1500,
+                prefersStatusBar: false,
+                borderSettings: FocusBorderSettings(isEnabled: false),
+                isDefault: true
+            )
+            try defaultProfile.insert(db)
+        }
+
+        
         return migrator
     }
     

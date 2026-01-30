@@ -11,16 +11,62 @@ public class FocusModeManager: ObservableObject {
     @Published public private(set) var isActive: Bool = false
     
     // Settings
-    @Published public var isMusicEnabled: Bool = true
+    @Published public var currentProfile: FocusProfileRecord?
     @Published public var musicItems: [SpotifyItem] = []
-    @Published public var borderSettings: FocusBorderSettings = FocusBorderSettings()
-    @Published public var lastDuration: TimeInterval = 1500 // 25 min default
-    @Published public var prefersStatusBar: Bool = false // true = minimized to status bar, false = floating window
+    
+    // Computed properties for UI compatibility
+    public var isMusicEnabled: Bool {
+        get { currentProfile?.isMusicEnabled ?? true }
+        set {
+            if var profile = currentProfile {
+                profile.isMusicEnabled = newValue
+                updateProfile(profile)
+            }
+        }
+    }
+    
+    public var borderSettings: FocusBorderSettings {
+        get { currentProfile?.borderSettings ?? FocusBorderSettings() }
+        set {
+            if var profile = currentProfile {
+                profile.borderSettings = newValue
+                updateProfile(profile)
+            }
+        }
+    }
+    
+    public var lastDuration: TimeInterval {
+        get { currentProfile?.lastDuration ?? 1500 }
+        set {
+            if var profile = currentProfile {
+                profile.lastDuration = newValue
+                updateProfile(profile)
+            }
+        }
+    }
+    
+    public var prefersStatusBar: Bool {
+        get { currentProfile?.prefersStatusBar ?? false }
+        set {
+            if var profile = currentProfile {
+                profile.prefersStatusBar = newValue
+                updateProfile(profile)
+            }
+        }
+    }
     
     private var timer: Timer?
     private let spotifyPlayer = SpotifyPlayerService()
+    private let repository: FocusProfileRepository
     
     private init() {
+        // Initialize repository with shared DB queue
+        // In a real app we might want dependency injection, but this is a singleton
+        guard let dbQueue = StorageManager.shared.dbQueue else {
+            fatalError("Database not initialized")
+        }
+        self.repository = FocusProfileRepository(dbQueue: dbQueue)
+        
         loadSettings()
     }
     
@@ -29,8 +75,10 @@ public class FocusModeManager: ObservableObject {
     /// Start a new focus session
     public func startSession(duration: TimeInterval, goal: String? = nil) {
         // Save last duration for quick focus
-        lastDuration = duration
-        saveSettings()
+        if var profile = currentProfile {
+            profile.lastDuration = duration
+            updateProfile(profile)
+        }
         
         // Select random music if available and enabled
         let selectedMusic = isMusicEnabled ? musicItems.randomElement() : nil
@@ -169,52 +217,79 @@ public class FocusModeManager: ObservableObject {
     // MARK: - Music Management
     
     public func addMusicItem(_ item: SpotifyItem) {
+        guard let profile = currentProfile else { return }
+        
         // Avoid duplicates - check by URL
         guard !musicItems.contains(where: { $0.url == item.url }) else {
             return
         }
-        musicItems.append(item)
-        saveSettings()
+        
+        let record = SpotifyItemRecord(
+            profileId: profile.id,
+            url: item.url,
+            type: item.type.rawValue,
+            title: item.title
+        )
+        
+        do {
+            try repository.addSpotifyItem(record)
+            loadMusicItems() // Reload from DB
+        } catch {
+            print("Failed to add music item: \(error)")
+        }
     }
     
     public func removeMusicItem(_ item: SpotifyItem) {
-        musicItems.removeAll { $0.id == item.id }
-        saveSettings()
+        guard let _ = currentProfile else { return }
+        
+        do {
+            try repository.removeSpotifyItem(item.id)
+            loadMusicItems() // Reload from DB
+        } catch {
+            print("Failed to remove music item: \(error)")
+        }
     }
     
     // MARK: - Persistence
     
-    private func loadSettings() {
-        isMusicEnabled = UserDefaults.standard.object(forKey: "focusMusicEnabled") as? Bool ?? true
-        prefersStatusBar = UserDefaults.standard.bool(forKey: "focusPrefersStatusBar")
-        
-        if let data = UserDefaults.standard.data(forKey: "focusMusicItems"),
-           let items = try? JSONDecoder().decode([SpotifyItem].self, from: data) {
-            musicItems = items
+    // Compatibility method for UI calls
+    public func saveSettings() {
+        if let profile = currentProfile {
+            updateProfile(profile)
         }
-        
-        if let data = UserDefaults.standard.data(forKey: "focusBorderSettings"),
-           let settings = try? JSONDecoder().decode(FocusBorderSettings.self, from: data) {
-            borderSettings = settings
-        }
-        
-        lastDuration = UserDefaults.standard.double(forKey: "focusLastDuration")
-        if lastDuration == 0 { lastDuration = 1500 }
     }
     
+    private func loadSettings() {
+        do {
+            // Load active profile
+            if let profile = try repository.fetchActiveProfile() {
+                self.currentProfile = profile
+                loadMusicItems()
+            } else {
+                print("No active profile found")
+            }
+        } catch {
+            print("Failed to load settings: \(error)")
+        }
+    }
     
-    public func saveSettings() {
-        UserDefaults.standard.set(isMusicEnabled, forKey: "focusMusicEnabled")
-        UserDefaults.standard.set(prefersStatusBar, forKey: "focusPrefersStatusBar")
+    private func loadMusicItems() {
+        guard let profile = currentProfile else { return }
         
-        if let data = try? JSONEncoder().encode(musicItems) {
-            UserDefaults.standard.set(data, forKey: "focusMusicItems")
+        do {
+            let records = try repository.fetchSpotifyItems(for: profile.id)
+            self.musicItems = records.map { $0.toSpotifyItem() }
+        } catch {
+            print("Failed to load music items: \(error)")
         }
-        
-        if let data = try? JSONEncoder().encode(borderSettings) {
-            UserDefaults.standard.set(data, forKey: "focusBorderSettings")
+    }
+    
+    private func updateProfile(_ profile: FocusProfileRecord) {
+        do {
+            try repository.save(profile)
+            self.currentProfile = profile
+        } catch {
+            print("Failed to save profile: \(error)")
         }
-        
-        UserDefaults.standard.set(lastDuration, forKey: "focusLastDuration")
     }
 }

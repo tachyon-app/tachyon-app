@@ -1,6 +1,7 @@
 import Foundation
 
 /// Protocol that all plugins must conform to
+@MainActor
 public protocol Plugin {
     /// Unique identifier for the plugin
     var id: String { get }

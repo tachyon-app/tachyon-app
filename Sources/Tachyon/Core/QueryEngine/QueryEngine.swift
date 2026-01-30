@@ -1,6 +1,7 @@
 import Foundation
 
 /// Main search engine that coordinates queries across all plugins
+@MainActor
 public final class QueryEngine {
     
     private var plugins: [Plugin] = []
