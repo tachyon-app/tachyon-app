@@ -25,6 +25,7 @@ targets:
       MACOSX_DEPLOYMENT_TARGET: "13.0"
       ENABLE_HARDENED_RUNTIME: YES
       CODE_SIGN_IDENTITY: "Apple Development"
+      CODE_SIGN_ENTITLEMENTS: Sources/Tachyon/Tachyon.entitlements
     dependencies:
       - target: TachyonCore
   
