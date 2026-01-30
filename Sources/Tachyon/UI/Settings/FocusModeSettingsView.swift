@@ -11,30 +11,181 @@ struct FocusModeSettingsView: View {
     
     private let metadataService = SpotifyMetadataService()
     
+    @State private var showAddProfileSheet = false
+    @State private var newProfileName = ""
+    @State private var hoveredProfileId: UUID?
+    
     var body: some View {
-        ScrollView {
-            HStack {
-                Spacer()
-                
-                VStack(alignment: .leading, spacing: 32) {
-                    Text("Focus Mode")
-                        .font(.system(size: 24, weight: .semibold))
+        HStack(spacing: 0) {
+            // MARK: - Sidebar
+            VStack(spacing: 0) {
+                // Header
+                HStack {
+                    Text("Profiles")
+                        .font(.system(size: 13, weight: .semibold))
                         .foregroundColor(.white)
-                    
-                    // Spotify Music Section
-                    spotifyMusicSection
-                    
-                    Divider()
-                        .background(Color.white.opacity(0.1))
-                    
-                    // Glowing Border Section
-                    glowingBorderSection
+                    Spacer()
+                    Button(action: { showAddProfileSheet = true }) {
+                        Image(systemName: "plus")
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundColor(.white)
+                            .frame(width: 20, height: 20)
+                            .background(Color.white.opacity(0.1))
+                            .clipShape(Circle())
+                    }
+                    .buttonStyle(.plain)
+                    .popover(isPresented: $showAddProfileSheet) {
+                        VStack(spacing: 16) {
+                            Text("New Profile")
+                                .font(.headline)
+                            TextField("Profile Name", text: $newProfileName)
+                                .textFieldStyle(.roundedBorder)
+                                .frame(width: 200)
+                                .onSubmit {
+                                    createNewProfile()
+                                }
+                            
+                            HStack {
+                                Button("Cancel") { showAddProfileSheet = false }
+                                Button("Create") { createNewProfile() }
+                                    .keyboardShortcut(.defaultAction)
+                                    .disabled(newProfileName.trimmingCharacters(in: .whitespaces).isEmpty)
+                            }
+                        }
+                        .padding()
+                    }
                 }
-                .frame(maxWidth: 600)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+                .background(Color(hex: "#1A1A1A"))
+                
+                // List
+                ScrollView {
+                    VStack(spacing: 4) {
+                        ForEach(manager.fetchAllProfiles()) { profile in
+                            ProfileRow(
+                                profile: profile,
+                                isSelected: manager.currentProfile?.id == profile.id,
+                                isHovered: hoveredProfileId == profile.id,
+                                onSelect: {
+                                    manager.switchProfile(profile)
+                                },
+                                onDelete: {
+                                    manager.deleteProfile(profile)
+                                }
+                            )
+                            .onHover { isHovered in
+                                if isHovered {
+                                    hoveredProfileId = profile.id
+                                } else if hoveredProfileId == profile.id {
+                                    hoveredProfileId = nil
+                                }
+                            }
+                        }
+                    }
+                    .padding(8)
+                }
+            }
+            .frame(width: 200)
+            .background(Color(hex: "#1E1E1E"))
+            .overlay(
+                Rectangle()
+                    .frame(width: 1, height: nil, alignment: .trailing)
+                    .foregroundColor(Color.black.opacity(0.2)),
+                alignment: .trailing
+            )
+            
+            // MARK: - Main Content
+            ScrollView {
+                HStack {
+                    Spacer()
+                    
+                    VStack(alignment: .leading, spacing: 32) {
+                        HStack {
+                            Text(manager.currentProfile?.name ?? "Focus Mode")
+                                .font(.system(size: 24, weight: .semibold))
+                                .foregroundColor(.white)
+                            
+                            if let profile = manager.currentProfile, !profile.isDefault {
+                                Spacer()
+                                Button(role: .destructive) {
+                                    manager.deleteProfile(profile)
+                                } label: {
+                                    Image(systemName: "trash")
+                                        .foregroundColor(.red.opacity(0.8))
+                                }
+                                .buttonStyle(.plain)
+                                .help("Delete this profile")
+                            }
+                        }
+                        
+                        // Spotify Music Section
+                        spotifyMusicSection
+                        
+                        Divider()
+                            .background(Color.white.opacity(0.1))
+                        
+                        // Glowing Border Section
+                        glowingBorderSection
+                    }
+                    .frame(maxWidth: 600)
+                    .padding(.horizontal, 40)
+                    
+                    Spacer()
+                }
+                .padding(.vertical, 40)
+            }
+            .background(Color(hex: "#252525"))
+        }
+    }
+    
+    private func createNewProfile() {
+        let name = newProfileName.trimmingCharacters(in: .whitespaces)
+        guard !name.isEmpty else { return }
+        
+        manager.createProfile(name: name)
+        newProfileName = ""
+        showAddProfileSheet = false
+    }
+    
+    // Helper View for Profile Row
+    struct ProfileRow: View {
+        let profile: FocusProfileRecord
+        let isSelected: Bool
+        let isHovered: Bool
+        let onSelect: () -> Void
+        let onDelete: () -> Void
+        
+        var body: some View {
+            HStack {
+                Text(profile.name)
+                    .font(.system(size: 13, weight: isSelected ? .medium : .regular))
+                    .foregroundColor(isSelected ? .white : .white.opacity(0.7))
                 
                 Spacer()
+                
+                if profile.isDefault {
+                    Image(systemName: "lock.fill")
+                        .font(.system(size: 10))
+                        .foregroundColor(.white.opacity(0.3))
+                }
             }
-            .padding(.vertical, 40)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(isSelected ? Color.blue.opacity(0.2) : (isHovered ? Color.white.opacity(0.05) : Color.clear))
+            .cornerRadius(6)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                onSelect()
+            }
+            .contextMenu {
+                if !profile.isDefault {
+                    Button(role: .destructive, action: onDelete) {
+                        Text("Delete Profile")
+                        Image(systemName: "trash")
+                    }
+                }
+            }
         }
     }
     

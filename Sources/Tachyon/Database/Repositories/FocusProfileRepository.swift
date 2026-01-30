@@ -10,14 +10,24 @@ public class FocusProfileRepository {
     
     // MARK: - Profiles
     
+    public func fetch(id: UUID) throws -> FocusProfileRecord? {
+        try dbQueue.read { db in
+            try FocusProfileRecord.fetchOne(db, key: id)
+        }
+    }
+
     public func fetchActiveProfile() throws -> FocusProfileRecord? {
-        // For now, simpler: fetch default or first one. 
-        // In future we might have "isActive" flag or setting storing active profile ID.
-        // Let's assume we fetch the one marked isDefault = true, or just first one.
+        // This is now primarily a fallback/default finder
         try dbQueue.read { db in
             try FocusProfileRecord
                 .filter(Column("isDefault") == true)
                 .fetchOne(db)
+        }
+    }
+    
+    public func count() throws -> Int {
+        try dbQueue.read { db in
+            try FocusProfileRecord.fetchCount(db)
         }
     }
     

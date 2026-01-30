@@ -33,6 +33,35 @@ public class FocusModePlugin: Plugin {
             }
         }
         
+        // Match profiles by name
+        let profiles = manager.fetchAllProfiles().sorted { (p1, p2) -> Bool in
+            // Default first, then alphabetical
+            if p1.isDefault { return true }
+            if p2.isDefault { return false }
+            return p1.name < p2.name
+        }
+        let matchingProfiles = profiles.filter { profile in
+            let name = profile.name.lowercased()
+            return name.hasPrefix(lowercased) || (name.contains(lowercased) && lowercased.count >= 2)
+        }
+        
+        if !matchingProfiles.isEmpty {
+            return matchingProfiles.map { profile in
+                QueryResult(
+                    id: UUID(),
+                    title: "Start \(profile.name) Focus Session",
+                    subtitle: "Last used duration: \(Int(profile.lastDuration/60))m",
+                    icon: "timer",
+                    alwaysShow: true,
+                    action: { [weak self] in
+                        guard let self = self else { return }
+                        self.manager.switchProfile(profile)
+                        self.manager.startSession(duration: profile.lastDuration)
+                    }
+                )
+            }
+        }
+
         // Check if query is a prefix of "focus" (fuzzy matching) or starts with "focus"
         let isFuzzyMatch = "focus".hasPrefix(lowercased) && lowercased.count >= 2
         let isExactPrefix = lowercased.hasPrefix("focus")
@@ -90,18 +119,19 @@ public class FocusModePlugin: Plugin {
     // MARK: - Result Creation
     
     private func createQuickFocusResult() -> QueryResult {
+        // Use current profile settings (last used/restored)
         let duration = manager.lastDuration
+        let profileName = manager.currentProfile?.name ?? "Focus"
         let minutes = Int(duration / 60)
         
         return QueryResult(
             id: UUID(),
             title: "Start Focus Session",
-            subtitle: "\(minutes) minutes (last used)",
+            subtitle: "\(minutes) minutes (using \(profileName) profile)",
             icon: "timer",
             alwaysShow: true,
             action: { [weak self] in
                 self?.manager.startSession(duration: duration)
-                // UI (floating window or status bar) is now shown by startSession based on preference
             }
         )
     }
@@ -120,12 +150,40 @@ public class FocusModePlugin: Plugin {
             alwaysShow: true,
             action: { [weak self] in
                 self?.manager.startSession(duration: duration)
-                // UI (floating window or status bar) is now shown by startSession based on preference
             }
         )
     }
     
     private func createPresetResults() -> [QueryResult] {
+        var results: [QueryResult] = []
+        
+        // 1. Add Profile-specific start options
+        let profiles = manager.fetchAllProfiles().sorted { (p1, p2) -> Bool in
+            if p1.isDefault { return true }
+            if p2.isDefault { return false }
+            return p1.name < p2.name
+        }
+        
+        for profile in profiles {
+             // Skip default if you want, or include it explicitly "Start Default Focus Session"
+             results.append(
+                QueryResult(
+                    id: UUID(), // Unique ID each time
+                    title: "Start \(profile.name) Focus Session",
+                    subtitle: "Last used duration: \(Int(profile.lastDuration/60))m",
+                    icon: "timer", // Could customization icon later
+                    alwaysShow: true,
+                    action: { [weak self] in
+                        guard let self = self else { return }
+                        // Switch to profile then start
+                        self.manager.switchProfile(profile)
+                        self.manager.startSession(duration: profile.lastDuration)
+                    }
+                )
+             )
+        }
+        
+        // 2. Add Generic Presets (using current active profile)
         let presets: [(minutes: Int, label: String)] = [
             (15, "15 minutes"),
             (25, "25 minutes (Pomodoro)"),
@@ -133,19 +191,20 @@ public class FocusModePlugin: Plugin {
             (60, "1 hour")
         ]
         
-        return presets.map { preset in
+        let presetResults = presets.map { preset in
             QueryResult(
                 id: UUID(),
                 title: "Focus for \(preset.label)",
-                subtitle: "Start a focus session",
+                subtitle: "Using current profile",
                 icon: "timer",
                 alwaysShow: true,
                 action: { [weak self] in
                     self?.manager.startSession(duration: TimeInterval(preset.minutes * 60))
-                    // UI (floating window or status bar) is now shown by startSession based on preference
                 }
             )
         }
+        
+        return results + presetResults
     }
     
     private func createStopResult() -> QueryResult {

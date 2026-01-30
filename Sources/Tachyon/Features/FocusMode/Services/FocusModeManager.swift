@@ -67,7 +67,101 @@ public class FocusModeManager: ObservableObject {
         }
         self.repository = FocusProfileRepository(dbQueue: dbQueue)
         
+        // Ensure default profile exists
+        ensureDefaultProfile()
+        
         loadSettings()
+    }
+    
+    // MARK: - Profile Management
+    
+    public var lastUsedProfileId: UUID? {
+        get {
+            if let string = UserDefaults.standard.string(forKey: "lastUsedFocusProfileId") {
+                return UUID(uuidString: string)
+            }
+            return nil
+        }
+        set {
+            if let uuid = newValue {
+                UserDefaults.standard.set(uuid.uuidString, forKey: "lastUsedFocusProfileId")
+            } else {
+                UserDefaults.standard.removeObject(forKey: "lastUsedFocusProfileId")
+            }
+        }
+    }
+    
+    public func fetchAllProfiles() -> [FocusProfileRecord] {
+        do {
+            return try repository.fetchAll()
+        } catch {
+            print("Failed to fetch profiles: \(error)")
+            return []
+        }
+    }
+    
+    public func createProfile(name: String) {
+        let newProfile = FocusProfileRecord(name: name, isDefault: false)
+        do {
+            try repository.save(newProfile)
+            switchProfile(newProfile)
+        } catch {
+            print("Failed to create profile: \(error)")
+        }
+    }
+    
+    public func deleteProfile(_ profile: FocusProfileRecord) {
+        guard !profile.isDefault else { return } // Cannot delete default
+        
+        do {
+            try repository.delete(profile.id)
+            try repository.clearSpotifyItems(for: profile.id)
+            
+            // If we deleted the current profile, switch to default
+            if currentProfile?.id == profile.id {
+                switchToDefaultProfile()
+            }
+        } catch {
+            print("Failed to delete profile: \(error)")
+        }
+    }
+    
+    public func switchProfile(_ profile: FocusProfileRecord) {
+        guard currentProfile?.id != profile.id else { return }
+        
+        self.currentProfile = profile
+        self.lastUsedProfileId = profile.id
+        loadMusicItems()
+    }
+    
+    private func switchToDefaultProfile() {
+        do {
+            if let defaultProfile = try repository.fetchActiveProfile() {
+                switchProfile(defaultProfile)
+            } else {
+                // Fallback if no default found (shouldn't happen due to ensureDefaultProfile)
+                if let first = try repository.fetchAll().first {
+                    switchProfile(first)
+                }
+            }
+        } catch {
+            print("Failed to switch to default profile: \(error)")
+        }
+    }
+    
+    private func ensureDefaultProfile() {
+        do {
+            let count = try repository.count()
+            if count == 0 {
+                let defaultProfile = FocusProfileRecord(
+                    name: "Default",
+                    isDefault: true
+                )
+                try repository.save(defaultProfile)
+            }
+        } catch {
+            print("Failed to create default profile: \(error)")
+        }
     }
     
     // MARK: - Session Management
@@ -261,12 +355,26 @@ public class FocusModeManager: ObservableObject {
     
     private func loadSettings() {
         do {
-            // Load active profile
-            if let profile = try repository.fetchActiveProfile() {
+            // Try to load last used, otherwise fallback to default/active
+            var profileToLoad: FocusProfileRecord?
+            
+            if let lastId = lastUsedProfileId, let lastProfile = try repository.fetch(id: lastId) {
+                profileToLoad = lastProfile
+            } else {
+                profileToLoad = try repository.fetchActiveProfile()
+            }
+            
+            if let profile = profileToLoad {
                 self.currentProfile = profile
                 loadMusicItems()
             } else {
+                // Should have been created by ensureDefaultProfile
                 print("No active profile found")
+                // Final fallback
+                if let first = try repository.fetchAll().first {
+                    self.currentProfile = first
+                    loadMusicItems()
+                }
             }
         } catch {
             print("Failed to load settings: \(error)")
