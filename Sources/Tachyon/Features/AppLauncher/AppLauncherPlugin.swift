@@ -10,9 +10,18 @@ public final class AppLauncherPlugin: Plugin {
     private var indexedApps: [AppInfo] = []
     private var systemSettingsPanes: [SystemSettingsPane] = []
     
+    private var fileMonitor: FileMonitor?
+    private var refreshTimer: Timer?
+    
     public init() {
         indexApps()
         indexSystemSettings()
+        
+        // Setup file monitoring
+        setupFileMonitoring()
+        
+        // Setup timer-based refresh (hybrid approach)
+        setupRefreshTimer()
     }
     
     public func search(query: String) -> [QueryResult] {
@@ -166,6 +175,41 @@ public final class AppLauncherPlugin: Plugin {
                 }
             }
         )
+    }
+    private func setupFileMonitoring() {
+        let searchPaths = [
+            "/Applications",
+            "/System/Applications",
+            "/System/Applications/Utilities",
+            "/System/Library/CoreServices/Applications",
+            FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Applications").path
+        ]
+        
+        fileMonitor = FileMonitor(paths: searchPaths)
+        fileMonitor?.onDidChange = { [weak self] in
+            print("📂 AppLauncher: File system change detected, refreshing apps...")
+            self?.refreshApps()
+        }
+    }
+    
+    private func setupRefreshTimer() {
+        // Refresh every 60 seconds
+        refreshTimer = Timer.scheduledTimer(withTimeInterval: 60.0, repeats: true) { [weak self] _ in
+            print("⏰ AppLauncher: Timer fired, refreshing apps...")
+            self?.refreshApps()
+        }
+    }
+    
+    private func refreshApps() {
+        // Run indexing on background thread
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            self?.indexApps()
+            
+            // Notify that results have changed
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(name: NSNotification.Name("RefreshSearchResults"), object: nil)
+            }
+        }
     }
 }
 
