@@ -2,6 +2,7 @@ import Cocoa
 import SwiftUI
 import Carbon
 import TachyonCore
+import ApplicationServices // For AX check logging if needed
 
 /// AppDelegate manages the global state of the app
 /// - Menu bar item
@@ -23,6 +24,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     
     // Clipboard history
     private var clipboardHistoryHotkeyID: UUID?
+    
+    // Window Switcher
+    private var windowSwitcherPanel: WindowSwitcherPanel?
     
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Singleton check - ensure only one instance is running
@@ -101,6 +105,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         
         // Initialize clipboard history
         setupClipboardHistory()
+        
+        // Initialize Window Switcher (Global Alt-Tab)
+        windowSwitcherPanel = WindowSwitcherPanel()
+        print("✅ Window Switcher initialized")
     }
     
     func applicationWillTerminate(_ notification: Notification) {
